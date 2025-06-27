@@ -1,0 +1,26 @@
+{
+  "name": "nuxfly",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "bin": {
+    "nuxfly": "./src/index.mjs"
+  },
+  "scripts": {
+    "lint": "eslint . --fix",
+    "nuxfly": "./src/index.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "devDependencies": {
+    "eslint": "^9.29.0"
+  },
+  "dependencies": {
+    "c12": "^3.0.4",
+    "citty": "^0.1.6",
+    "consola": "^3.4.2",
+    "execa": "^9.6.0"
+  }
+}
