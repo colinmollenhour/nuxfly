@@ -71,6 +71,11 @@ const main = defineCommand({
           description: 'Skip deployment after launch',
           default: true,
         },
+        size: {
+          type: 'string',
+          description: 'Size in GB for SQLite volume (default: 1)',
+          default: '1',
+        },
       },
       async run({ args }) {
         const config = await ensureConfig();

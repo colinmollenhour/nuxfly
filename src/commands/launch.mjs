@@ -1,6 +1,7 @@
 import { join } from 'path';
+import { readFile } from 'fs/promises';
 import consola from 'consola';
-import { flyLaunch } from '../utils/flyctl.mjs';
+import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
 import { ensureNuxflyDir, copyFile } from '../utils/filesystem.mjs';
 import { validateLaunchCommand } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
@@ -57,6 +58,17 @@ export const launch = withErrorHandling(async (args, config) => {
       await unlink(rootFlyToml);
       
       consola.success(`Saved fly.toml to ${nuxflyFlyToml}`);
+      
+      // Create SQLite volume after successful launch
+      const region = await extractRegionFromFlyToml(nuxflyFlyToml);
+      if (region) {
+        const volumeSize = args.size || '1';
+        await createSqliteVolume(region, volumeSize, config);
+      } else {
+        consola.warn('Could not extract region from fly.toml. Volume creation skipped.');
+        consola.info('You can create the volume manually later with:');
+        consola.info(`  flyctl volumes create sqlite_data --region <region> --size ${args.size || '1'}`);
+      }
     } else {
       consola.warn('No fly.toml was generated. Launch may have been cancelled or failed.');
     }
@@ -77,6 +89,46 @@ export const launch = withErrorHandling(async (args, config) => {
     });
   }
 });
+
+/**
+ * Parse fly.toml file and extract the primary region
+ */
+async function extractRegionFromFlyToml(flyTomlPath) {
+  try {
+    const flyTomlContent = await readFile(flyTomlPath, 'utf-8');
+    
+    // Parse the primary_region from the fly.toml file
+    const regionMatch = flyTomlContent.match(/^primary_region\s*=\s*['"]([^'"]+)['"]$/m);
+    
+    if (regionMatch && regionMatch[1]) {
+      return regionMatch[1];
+    }
+    
+    consola.debug('No primary_region found in fly.toml');
+    return null;
+  } catch (error) {
+    consola.debug('Failed to read or parse fly.toml:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Create SQLite volume for the app
+ */
+async function createSqliteVolume(region, size, config) {
+  consola.info(`Creating SQLite volume (${size}GB) in region ${region}...`);
+  
+  try {
+    const volumeArgs = ['sqlite_data', '--region', region, '--size', size];
+    await executeFlyctl('volumes', ['create', ...volumeArgs], config);
+    consola.success(`SQLite volume created successfully in ${region}`);
+  } catch (error) {
+    // Don't fail the entire launch if volume creation fails
+    consola.warn(`Failed to create SQLite volume: ${error.message}`);
+    consola.info('You can create the volume manually later with:');
+    consola.info(`  flyctl volumes create sqlite_data --region ${region} --size ${size}`);
+  }
+}
 
 /**
  * Display helpful next steps after successful launch
