@@ -1,0 +1,8 @@
+{
+  "name": "nuxfly-migration",
+  "version": "1.0.0",
+  "dependencies": {
+    "drizzle-kit": "^0.31.3",
+    "drizzle-orm": "^0.44.2"
+  }
+}

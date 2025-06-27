@@ -1,0 +1,41 @@
+# This file only starts PostgreSQL and MinIO, you should still use native Node.js to run Nuxt.
+services:
+  minio:
+    image: minio/minio
+    environment:
+      MINIO_ROOT_USER: nuxfly
+      MINIO_ROOT_PASSWORD: nuxfly
+      MINIO_SERVER_URL: http://${MINIO_DOMAIN:-localhost}:8200
+    ports:
+      - "8200:8200"
+      - "8201:8201"
+    volumes:
+      - minio:/data/minio
+    command: minio server /data/minio --address ":8200" --console-address ":8201"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/minio/health/live"]
+      interval: 15s
+      timeout: 2s
+      retries: 5
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - |
+        mc alias set local http://minio:8200 nuxfly nuxfly
+        if ! mc admin user svcacct info local AAAAAAAAAAAAAAAAAAAA 2>&1; then
+          mc admin user svcacct add \
+            --access-key AAAAAAAAAAAAAAAAAAAA \
+            --secret-key BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB \
+            local nuxfly
+        fi
+        mc mb --ignore-existing local/nuxfly
+        mc anonymous set download local/nuxfly
+
+volumes:
+  minio:

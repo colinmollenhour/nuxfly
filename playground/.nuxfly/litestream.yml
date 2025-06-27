@@ -1,0 +1,17 @@
+dbs:
+  - path: /data/db.sqlite
+    meta-path: /data/db.litestream-meta
+    replicas:
+      - type: s3
+        bucket: ${BUCKET_NAME}
+        path: litestream/
+        endpoint: ${AWS_ENDPOINT_URL_S3}
+        region: ${AWS_REGION}
+        access-key-id: ${AWS_ACCESS_KEY_ID}
+        secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+        # Sync every 30 seconds for near real-time backup
+        sync-interval: 30s
+        # Retain snapshots for 4 days
+        retention: 96h
+        # Snapshot interval - create full snapshots every hour
+        snapshot-interval: 2h
