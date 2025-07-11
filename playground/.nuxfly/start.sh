@@ -80,15 +80,11 @@ fi
 cd /app
 
 export NUXT_NUXFLY_DB_URL="file:$DATABASE_PATH"
-if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-    echo "AWS_ACCESS_KEY_ID is not set, skipping litestream backup!!"
+
+if [ -z "$LITESTREAM_S3_ACCESS_KEY_ID" ]; then
+    echo "LITESTREAM_S3_ACCESS_KEY_ID is not set, skipping litestream backup!!"
     exec node dist/index.mjs
 else
-    export NUXT_NUXFLY_S3_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-    export NUXT_NUXFLY_S3_SECRET_ACCESS_KEY=$AWS_ENDPOINT_URL_S3
-    export NUXT_NUXFLY_S3_ENDPOINT=$AWS_ENDPOINT_URL_S3
-    export NUXT_NUXFLY_S3_BUCKET=$BUCKET_NAME
-    export NUXT_NUXFLY_S3_REGION=${AWS_REGION:-"auto"}
     echo "Starting Litestream with Node.js application..."
     exec litestream replicate -config /etc/litestream.yml -exec "node dist/index.mjs"
 fi

@@ -15,9 +15,9 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
-    "@eslint/js": "^9.29.0",
-    "eslint": "^9.29.0",
-    "globals": "^16.2.0"
+    "@eslint/js": "^9.31.0",
+    "eslint": "^9.31.0",
+    "globals": "^16.3.0"
   },
   "dependencies": {
     "c12": "^3.0.4",

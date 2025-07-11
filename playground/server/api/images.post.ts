@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const storage = useStorage('nuxfly')
+  const storage = useStorage('nuxfly-public')
   const key = randomUUID()
   await storage.setItemRaw(key, file[0].data)
 
