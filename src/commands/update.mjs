@@ -26,6 +26,32 @@ function getAppNameFromFlyToml(config) {
 }
 
 /**
+ * Get organization name from flyctl status
+ */
+async function getOrgName(appName, config) {
+  try {
+    const result = await executeFlyctlWithOutput('status', ['--app', appName], config);
+    
+    // Parse the output to extract organization name
+    const lines = result.stdout.split('\n');
+    for (const line of lines) {
+      if (line.includes('Owner')) {
+        const match = line.match(/Owner\s*=\s*(.+)/);
+        if (match) {
+          return match[1].trim();
+        }
+      }
+    }
+    
+    consola.debug('Could not find organization name in status output');
+    return null;
+  } catch (error) {
+    consola.debug('Failed to get organization name:', error.message);
+    return null;
+  }
+}
+
+/**
  * Update command - adds missing S3 buckets based on current configuration
  */
 export const update = withErrorHandling(async (args, config) => {
@@ -44,6 +70,13 @@ export const update = withErrorHandling(async (args, config) => {
     throw new NuxflyError(`Cannot access app "${appName}". Make sure the app exists and you have permission.`);
   }
   
+  // Get organization name for storage commands
+  const orgName = await getOrgName(appName, config);
+  if (!orgName) {
+    throw new NuxflyError('Could not determine organization name. Make sure you have access to the app.');
+  }
+  consola.debug(`Using organization: ${orgName}`);
+  
   // Load Nuxt config to detect bucket requirements
   const nuxtConfig = (await loadConfig()).nuxt;
   const nuxflyConfig = nuxtConfig?.nuxfly || {};
@@ -52,10 +85,11 @@ export const update = withErrorHandling(async (args, config) => {
   // Check which buckets are configured
   const needsPublicBucket = !!nuxflyConfig.publicStorage;
   const needsPrivateBucket = !!nuxflyConfig.privateStorage;
+  const needsLitestreamBucket = !!nuxflyConfig.litestream;
 
-  if (!needsPublicBucket && !needsPrivateBucket) {
-    consola.info('ℹ️  No public or private bucket configurations found in nuxt.config.');
-    consola.info('Add publicBucket or privateBucket to your nuxfly config to enable bucket creation.');
+  if (!needsPublicBucket && !needsPrivateBucket && !needsLitestreamBucket) {
+    consola.info('ℹ️  No bucket configurations found in nuxt.config.');
+    consola.info('Add litestream, publicStorage, or privateStorage to your nuxfly config to enable bucket creation.');
     return;
   }
   
@@ -64,13 +98,24 @@ export const update = withErrorHandling(async (args, config) => {
   
   let bucketsCreated = 0;
   
+  // Create litestream bucket if needed and doesn't exist
+  if (needsLitestreamBucket) {
+    const litestreamBucketName = `${appName}-litestream`;
+    if (existingBuckets.includes(litestreamBucketName)) {
+      consola.info(`✅ Litestream bucket already exists: ${litestreamBucketName}`);
+    } else {
+      await createLitestreamBucket(appName, orgName, config);
+      bucketsCreated++;
+    }
+  }
+  
   // Create public bucket if needed and doesn't exist
   if (needsPublicBucket) {
     const publicBucketName = `${appName}-public`;
     if (existingBuckets.includes(publicBucketName)) {
       consola.info(`✅ Public bucket already exists: ${publicBucketName}`);
     } else {
-      await createPublicBucket(appName, config);
+      await createPublicBucket(appName, orgName, config);
       bucketsCreated++;
     }
   }
@@ -81,7 +126,7 @@ export const update = withErrorHandling(async (args, config) => {
     if (existingBuckets.includes(privateBucketName)) {
       consola.info(`✅ Private bucket already exists: ${privateBucketName}`);
     } else {
-      await createPrivateBucket(appName, config);
+      await createPrivateBucket(appName, orgName, config);
       bucketsCreated++;
     }
   }
@@ -129,13 +174,13 @@ async function getExistingBuckets(appName, config) {
 /**
  * Create public bucket for public assets
  */
-async function createPublicBucket(appName, config) {
+async function createPublicBucket(appName, orgName, config) {
   const bucketName = `${appName}-public`;
   consola.info(`Creating public bucket: ${bucketName}`);
   
   try {
     // Create public bucket from /tmp directory
-    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--public', '--app', appName], config, '/tmp');
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName, '--public'], config, '/tmp');
     
     // Parse the output to extract credentials
     const credentials = parseStorageCreateOutput(result.stdout);
@@ -163,13 +208,13 @@ async function createPublicBucket(appName, config) {
 /**
  * Create private bucket for private storage
  */
-async function createPrivateBucket(appName, config) {
+async function createPrivateBucket(appName, orgName, config) {
   const bucketName = `${appName}-private`;
   consola.info(`Creating private bucket: ${bucketName}`);
   
   try {
     // Create private bucket from /tmp directory
-    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--app', appName], config, '/tmp');
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName], config, '/tmp');
     
     // Parse the output to extract credentials
     const credentials = parseStorageCreateOutput(result.stdout);
@@ -190,6 +235,40 @@ async function createPrivateBucket(appName, config) {
     }
   } catch (error) {
     consola.error(`Failed to create private bucket: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Create litestream bucket for database backups
+ */
+async function createLitestreamBucket(appName, orgName, config) {
+  const bucketName = `${appName}-litestream`;
+  consola.info(`Creating litestream bucket: ${bucketName}`);
+  
+  try {
+    // Create bucket from /tmp directory to avoid taking app's default slot
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName], config, '/tmp');
+    
+    // Parse the output to extract credentials
+    const credentials = parseStorageCreateOutput(result.stdout);
+    
+    if (credentials) {
+      // Set secrets with LITESTREAM_ prefix to match litestream.yml
+      await setFlySecrets(appName, config, {
+        'LITESTREAM_S3_ACCESS_KEY_ID': credentials.accessKeyId,
+        'LITESTREAM_S3_SECRET_ACCESS_KEY': credentials.secretAccessKey,
+        'LITESTREAM_S3_ENDPOINT_URL': credentials.endpointUrl,
+        'LITESTREAM_S3_REGION': credentials.region,
+        'LITESTREAM_S3_BUCKET_NAME': credentials.bucketName,
+      });
+      
+      consola.success(`✅ Litestream bucket created: ${bucketName}`);
+    } else {
+      consola.warn('Failed to parse litestream bucket credentials');
+    }
+  } catch (error) {
+    consola.error(`Failed to create litestream bucket: ${error.message}`);
     throw error;
   }
 }
