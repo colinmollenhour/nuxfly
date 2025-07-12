@@ -23,6 +23,7 @@
     "drizzle-kit": "^0.31.3",
     "drizzle-orm": "^0.44.2",
     "get-content-type": "^0.2.0",
+    "minio": "^8.0.5",
     "nuxt": "^3.17.5",
     "unstorage": "^1.16.0"
   },

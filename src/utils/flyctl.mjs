@@ -27,7 +27,7 @@ export function buildFlyctlArgs(command, userArgs = [], config = {}) {
   const args = [command];
   
   // Add config flag if .nuxfly/fly.toml exists
-  if (config._runtime?.flyTomlExists) {
+  if (command !== 'storage' && config._runtime?.flyTomlExists) {
     const flyTomlPath = getFlyTomlPath(config);
     args.push('--config', flyTomlPath);
     consola.debug(`Using config: ${flyTomlPath}`);
@@ -35,7 +35,7 @@ export function buildFlyctlArgs(command, userArgs = [], config = {}) {
   
   // Add app flag if configured
   const appName = getAppName(config);
-  if (appName) {
+  if (command !== 'storage' && appName) {
     args.push('--app', appName);
     consola.debug(`Using app: ${appName}`);
   }

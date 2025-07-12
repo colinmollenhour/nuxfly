@@ -1,7 +1,5 @@
 <template>
   <div class="flex flex-col items-center justify-center gap-4 min-h-screen">
-    <h1>Public Access Key: {{ config.nuxfly?.publicBucket?.s3AccessKeyId }}</h1>
-    <h1>Private Access Key: {{ config.nuxfly?.privateBucket?.s3AccessKeyId }}</h1>
     <UCard class="w-full max-w-md">
       <template #header>
         <h1 class="font-bold text-xl text-center">Todo List</h1>

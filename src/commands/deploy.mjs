@@ -3,7 +3,6 @@ import { flyDeploy } from '../utils/flyctl.mjs';
 import { validateDeploymentConfig } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { getNuxflyDir } from '../utils/config.mjs';
-import { buildApplication } from '../utils/build.mjs';
 import { generate } from './generate.mjs';
 
 /**

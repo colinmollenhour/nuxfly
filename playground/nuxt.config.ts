@@ -4,7 +4,8 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxt/ui',
-    '@nuxt/eslint'
+    '@nuxt/eslint',
+    '../src/module',
   ],
 
   css: ['~/assets/css/main.css'],
@@ -13,23 +14,29 @@ export default defineNuxtConfig({
     compatibilityVersion: 4
   },
 
+  nuxfly: {
+    litestream: true,
+    publicStorage: true,
+    privateStorage: false,
+  },
+  
   runtimeConfig: {
     nuxfly: {
-      dbUrl: 'file:.data/db.sqlite',
+      //dbUrl: 'file:.data/db.sqlite',
       publicBucket: {
         s3AccessKeyId: 'AAAAAAAAAAAAAAAAAAAA',
         s3SecretAccessKey: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
-        s3Endpoint: 'http://localhost:8200',
-        s3Bucket: 'nuxfly-public',
+        s3Endpoint: 'http://localhost:8200', // Wiretap endpoint
+        s3Bucket: 'nuxfly',
         s3Region: 'auto',
       },
-      privateBucket: {
-        s3AccessKeyId: 'CCCCCCCCCCCCCCCCCCCC',
-        s3SecretAccessKey: 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
-        s3Endpoint: 'http://localhost:8200',
-        s3Bucket: 'nuxfly-private',
-        s3Region: 'auto',
-      },
+      // privateBucket: {
+      //   // s3AccessKeyId: 'AAAAAAAAAAAAAAAAAAAA',
+      //   // s3SecretAccessKey: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+      //   // s3Endpoint: 'http://localhost:8200',
+      //   // s3Bucket: 'nuxfly',
+      //   // s3Region: 'auto',
+      // },
     },
     public: {
       s3PublicUrl: 'http://localhost:8200/nuxfly',

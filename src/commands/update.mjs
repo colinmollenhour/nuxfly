@@ -1,7 +1,29 @@
 import consola from 'consola';
+import { readFileSync } from 'fs';
 import { executeFlyctlWithOutput, executeFlyctlWithOutputInDir, executeFlyctl, checkAppAccess } from '../utils/flyctl.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
-import { loadConfig, getAppName } from '../utils/config.mjs';
+import { loadConfig, getAppName, getFlyTomlPath, hasFlyToml } from '../utils/config.mjs';
+import { parseFlyToml } from '../templates/fly-toml.mjs';
+
+/**
+ * Get app name from fly.toml file
+ */
+function getAppNameFromFlyToml(config) {
+  try {
+    if (!hasFlyToml(config)) {
+      return null;
+    }
+    
+    const flyTomlPath = getFlyTomlPath(config);
+    const flyTomlContent = readFileSync(flyTomlPath, 'utf8');
+    const flyConfig = parseFlyToml(flyTomlContent);
+    
+    return flyConfig.app;
+  } catch (error) {
+    consola.debug('Failed to read app name from fly.toml:', error.message);
+    return null;
+  }
+}
 
 /**
  * Update command - adds missing S3 buckets based on current configuration
@@ -9,8 +31,8 @@ import { loadConfig, getAppName } from '../utils/config.mjs';
 export const update = withErrorHandling(async (args, config) => {
   consola.info('🔄 Updating S3 buckets...');
   
-  // Get app name from config or args
-  const appName = args.app || getAppName(config);
+  // Get app name from args, fly.toml, or config (in that order)
+  const appName = args.app || getAppNameFromFlyToml(config) || getAppName(config);
   if (!appName) {
     throw new NuxflyError('App name is required. Specify with --app or ensure fly.toml exists.');
   }
@@ -23,13 +45,14 @@ export const update = withErrorHandling(async (args, config) => {
   }
   
   // Load Nuxt config to detect bucket requirements
-  const nuxtConfig = await loadConfig();
+  const nuxtConfig = (await loadConfig()).nuxt;
   const nuxflyConfig = nuxtConfig?.nuxfly || {};
+  consola.debug('Loaded nuxfly configuration:', nuxflyConfig);
   
   // Check which buckets are configured
-  const needsPublicBucket = !!nuxflyConfig.publicBucket;
-  const needsPrivateBucket = !!nuxflyConfig.privateBucket;
-  
+  const needsPublicBucket = !!nuxflyConfig.publicStorage;
+  const needsPrivateBucket = !!nuxflyConfig.privateStorage;
+
   if (!needsPublicBucket && !needsPrivateBucket) {
     consola.info('ℹ️  No public or private bucket configurations found in nuxt.config.');
     consola.info('Add publicBucket or privateBucket to your nuxfly config to enable bucket creation.');
@@ -77,7 +100,7 @@ export const update = withErrorHandling(async (args, config) => {
 async function getExistingBuckets(appName, config) {
   try {
     consola.debug('Checking existing storage buckets...');
-    const result = await executeFlyctlWithOutput('storage', ['list', '--app', appName], config);
+    const result = await executeFlyctlWithOutput('storage', ['list'], config);
     
     // Parse the output to extract bucket names
     const buckets = [];
@@ -112,14 +135,14 @@ async function createPublicBucket(appName, config) {
   
   try {
     // Create public bucket from /tmp directory
-    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--public'], config, '/tmp');
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--public', '--app', appName], config, '/tmp');
     
     // Parse the output to extract credentials
     const credentials = parseStorageCreateOutput(result.stdout);
     
     if (credentials) {
       // Set secrets with NUXT_NUXFLY_PUBLIC_BUCKET_S3_ prefix to override runtime config
-      await setFlySecrets(config, {
+      await setFlySecrets(appName, config, {
         'NUXT_NUXFLY_PUBLIC_BUCKET_S3_ACCESS_KEY_ID': credentials.accessKeyId,
         'NUXT_NUXFLY_PUBLIC_BUCKET_S3_SECRET_ACCESS_KEY': credentials.secretAccessKey,
         'NUXT_NUXFLY_PUBLIC_BUCKET_S3_ENDPOINT': credentials.endpointUrl,
@@ -146,14 +169,14 @@ async function createPrivateBucket(appName, config) {
   
   try {
     // Create private bucket from /tmp directory
-    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName], config, '/tmp');
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--app', appName], config, '/tmp');
     
     // Parse the output to extract credentials
     const credentials = parseStorageCreateOutput(result.stdout);
     
     if (credentials) {
       // Set secrets with NUXT_NUXFLY_PRIVATE_BUCKET_S3_ prefix to override runtime config
-      await setFlySecrets(config, {
+      await setFlySecrets(appName, config, {
         'NUXT_NUXFLY_PRIVATE_BUCKET_S3_ACCESS_KEY_ID': credentials.accessKeyId,
         'NUXT_NUXFLY_PRIVATE_BUCKET_S3_SECRET_ACCESS_KEY': credentials.secretAccessKey,
         'NUXT_NUXFLY_PRIVATE_BUCKET_S3_ENDPOINT': credentials.endpointUrl,
@@ -209,7 +232,7 @@ function parseStorageCreateOutput(output) {
 /**
  * Set multiple Fly secrets
  */
-async function setFlySecrets(config, secrets) {
+async function setFlySecrets(appName, config, secrets) {
   const secretArgs = [];
   
   for (const [key, value] of Object.entries(secrets)) {
@@ -217,7 +240,7 @@ async function setFlySecrets(config, secrets) {
   }
   
   try {
-    await executeFlyctl('secrets', ['set', ...secretArgs], config);
+    await executeFlyctl('secrets', ['set', ...secretArgs, '--app', appName, '--stage'], config);
     consola.debug(`Set ${Object.keys(secrets).length} secrets`);
   } catch (error) {
     consola.error(`Failed to set secrets: ${error.message}`);

@@ -3,27 +3,20 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import consola from 'consola';
 import { ConfigError, NotNuxtProjectError, validateRequired } from './errors.mjs';
+import { loadNuxtConfig } from '@nuxt/kit';
 
 /**
  * Default configuration values
  */
 const DEFAULT_CONFIG = {
   app: null,
-  region: 'ord',
-  memory: '512mb',
-  instances: {
-    min: 1,
-    max: 3,
-  },
-  env: {
-    NODE_ENV: 'production',
-  },
-  secrets: [],
-  volumes: [],
-  dockerfile: true,
-  build: {
-    dockerfile: './Dockerfile',
-  },
+  // region: 'ord',
+  // memory: '512mb',
+  // size: 'shared-cpu-1x',
+  // instances: {
+  //   min: 1,
+  //   max: 3,
+  // },
 };
 
 /**
@@ -38,21 +31,19 @@ export async function loadConfig() {
   }
 
   // Load configuration using c12
-  const { config: nuxtConfig } = await loadC12Config({
-    name: 'nuxt',
-    cwd,
-    configFile: ['nuxt.config.js', 'nuxt.config.ts', 'nuxt.config.mjs'],
+  const nuxtConfig = await loadNuxtConfig({
+    rootDir: cwd,
+    configFile: 'nuxt.config.ts',
     defaults: {},
-  }).catch((error) => {
-    consola.debug('Failed to load nuxt.config:', error.message);
-    return { config: {} };
-  });
+    env: process.env,
+  })
 
   // Extract nuxfly configuration
   const nuxflyConfig = nuxtConfig?.nuxfly || {};
   
   // Merge with defaults
-  const config = mergeConfig(DEFAULT_CONFIG, nuxflyConfig);
+  const config = mergeConfig(DEFAULT_CONFIG, nuxflyConfig?.flyApp || {});
+  config.nuxt = nuxtConfig;
   
   // Override with environment variables
   applyEnvironmentOverrides(config);
@@ -69,8 +60,6 @@ export async function loadConfig() {
     distPath: join(cwd, '.output'),
   };
   
-  consola.debug('Loaded configuration:', config);
-  
   return config;
 }
 
@@ -79,10 +68,10 @@ export async function loadConfig() {
  */
 function isNuxtProject(cwd) {
   const nuxtConfigFiles = [
-    'nuxt.config.js',
+    // 'nuxt.config.js',
     'nuxt.config.ts',
-    'nuxt.config.mjs',
-    'nuxt.config.cjs',
+    // 'nuxt.config.mjs',
+    // 'nuxt.config.cjs',
   ];
   
   return nuxtConfigFiles.some(filename => existsSync(join(cwd, filename)));

@@ -49,10 +49,11 @@ export function shouldProxy(command) {
   // List of commands that nuxfly handles directly
   const nuxflyCommands = [
     'launch',
-    'import', 
+    'import',
     'generate',
     'deploy',
     'studio',
+    'update',
     'help',
     '--help',
     '-h',

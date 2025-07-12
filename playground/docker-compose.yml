@@ -4,7 +4,7 @@ services:
     image: minio/minio
     environment:
       MINIO_ROOT_USER: nuxfly
-      MINIO_ROOT_PASSWORD: nuxfly
+      MINIO_ROOT_PASSWORD: nuxflyPassword
       MINIO_SERVER_URL: http://${MINIO_DOMAIN:-localhost}:8200
     ports:
       - "8200:8200"
@@ -27,7 +27,7 @@ services:
       - sh
       - -c
       - |
-        mc alias set local http://minio:8200 nuxfly nuxfly
+        mc alias set local http://minio:8200 nuxfly nuxflyPassword
         if ! mc admin user svcacct info local AAAAAAAAAAAAAAAAAAAA 2>&1; then
           mc admin user svcacct add \
             --access-key AAAAAAAAAAAAAAAAAAAA \
@@ -37,5 +37,24 @@ services:
         mc mb --ignore-existing local/nuxfly
         mc anonymous set download local/nuxfly
 
+  wiretap:
+    image: pb33f/wiretap
+    ports:
+      - "9195:9195"
+      - "9196:9196"
+      - "9197:9197"
+    configs:
+      - source: minio
+        target: /wiretap.yaml
+    command: wiretap -u https://webhook.site/68b2b8dd-2c8c-4f98-8a2d-a07b1c434ced -c /wiretap.yaml --port 9195 --monitor-port 9196 --ws-port 9197
+    #command: wiretap -u http://minio:8200 -c /wiretap.yaml --port 9195 --monitor-port 9196 --ws-port 9197
+
+configs:
+  minio:
+    name: minio
+    content: |
+      headers:
+        inject:
+          Host: localhost
 volumes:
   minio:
