@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for nuxfly-test on 2025-06-27T00:45:42-04:00
+# fly.toml app configuration file generated for nuxfly-test2 on 2025-07-12T19:23:00-04:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -6,8 +6,15 @@
 app = 'nuxfly-test2'
 primary_region = 'iad'
 
+[experimental]
+  exec = ['sh', '/start.sh']
+
 [build]
   dockerfile = 'Dockerfile'
+
+[[mounts]]
+  source = 'sqlite_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 3000
@@ -22,33 +29,19 @@ primary_region = 'iad'
     hard_limit = 500
     soft_limit = 400
 
-  # [[http_service.checks]]
-  #   interval = '10s'
-  #   timeout = '2s'
-  #   grace_period = '5s'
-  #   method = 'get'
-  #   path = '/health-check'
-
-[[mounts]]
-  source = 'sqlite_data'
-  destination = '/data'
-
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
 
 [[statics]]
-  guest_path = "/app/public/_fonts"
-  url_prefix = "/_fonts"
+  guest_path = '/app/public/_fonts'
+  url_prefix = '/_fonts'
 
 [[statics]]
-  guest_path = "/app/public/_nuxt"
-  url_prefix = "/_nuxt"
+  guest_path = '/app/public/_nuxt'
+  url_prefix = '/_nuxt'
 
 [[statics]]
-  guest_path = "/app/public/favicon.ico"
-  url_prefix = "/favicon.ico"
-
-[experimental]
-  exec = ['sh', '/start.sh']
+  guest_path = '/app/public/favicon.ico'
+  url_prefix = '/favicon.ico'

@@ -27,7 +27,8 @@ export function buildFlyctlArgs(command, userArgs = [], config = {}) {
   const args = [command];
   
   // Add config flag if .nuxfly/fly.toml exists
-  if (command !== 'storage' && config._runtime?.flyTomlExists) {
+  // Skip config flag for launch command to avoid creating fly.toml in wrong location
+  if (command !== 'storage' && command !== 'launch' && config._runtime?.flyTomlExists) {
     const flyTomlPath = getFlyTomlPath(config);
     args.push('--config', flyTomlPath);
     consola.debug(`Using config: ${flyTomlPath}`);
@@ -146,7 +147,7 @@ export const streamFlyctl = withErrorHandling(async (command, userArgs = [], con
   
   const execOptions = {
     stdio: 'inherit',
-    cwd: options.cwd || process.cwd(),
+    cwd: config._runtime?.nuxflyDir,
     env: {
       ...process.env,
       ...options.env,
