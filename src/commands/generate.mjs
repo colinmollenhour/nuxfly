@@ -4,6 +4,7 @@ import { ensureNuxflyDir, writeFile, copyDistDir } from '../utils/filesystem.mjs
 import { validateFlyTomlExists } from '../utils/validation.mjs';
 import { withErrorHandling } from '../utils/errors.mjs';
 import { hasDistDir } from '../utils/config.mjs';
+import { buildApplication } from '../utils/build.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 
 /**
@@ -15,26 +16,29 @@ export const generate = withErrorHandling(async (args, config) => {
   // Validate that fly.toml exists
   validateFlyTomlExists(config);
   
+  // Build the application first (unless --no-build is specified)
+  consola.info('Step 1: Building application...');
+  await buildApplication({ skipBuild: !args.build });
+  
   // Ensure .nuxfly directory exists
   const nuxflyDir = await ensureNuxflyDir(config);
   
   try {
     // Generate Dockerfile
-    consola.info('Generating Dockerfile...');
+    consola.info(`Step 2: Generating Dockerfile...`);
     const dockerfileContent = generateDockerfile({
-      nodeVersion: config.nodeVersion || '20',
-      packageManager: detectPackageManager(),
+      nodeVersion: config.nodeVersion,
     });
     await writeFile(join(nuxflyDir, 'Dockerfile'), dockerfileContent);
     
     // Generate .dockerignore
-    consola.info('Generating .dockerignore...');
+    consola.info('Step 3: Generating .dockerignore...');
     const dockerignoreContent = generateDockerignore();
     await writeFile(join(nuxflyDir, '.dockerignore'), dockerignoreContent);
     
     // Copy dist directory if it exists
     if (hasDistDir(config)) {
-      consola.info('Copying dist directory...');
+      consola.info('Step 4: Copying dist directory...');
       await copyDistDir(config);
     } else {
       consola.debug('No dist directory found, skipping copy');
@@ -43,33 +47,18 @@ export const generate = withErrorHandling(async (args, config) => {
     consola.success('✅ All deployment files generated successfully!');
     
     // Display generated files
-    displayGeneratedFiles(nuxflyDir, hasDistDir(config));
+    displayGeneratedFiles(hasDistDir(config), args.build);
     
   } catch (error) {
     throw new Error(`Failed to generate deployment files: ${error.message}`);
   }
 });
 
-/**
- * Detect package manager from lock files
- */
-function detectPackageManager() {
-  const { existsSync } = require('fs');
-  const cwd = process.cwd();
-  
-  if (existsSync(join(cwd, 'pnpm-lock.yaml'))) {
-    return 'pnpm';
-  }
-  if (existsSync(join(cwd, 'yarn.lock'))) {
-    return 'yarn';
-  }
-  return 'npm';
-}
 
 /**
  * Display list of generated files
  */
-function displayGeneratedFiles(nuxflyDir, hasDistCopy) {
+function displayGeneratedFiles(hasDistCopy, build) {
   const files = [
     '📄 fly.toml (configuration)',
     '🐳 Dockerfile (container image)',
@@ -77,7 +66,7 @@ function displayGeneratedFiles(nuxflyDir, hasDistCopy) {
   ];
   
   if (hasDistCopy) {
-    files.push('📁 dist/ (application build)');
+    files.push('📁 .output/ (application '+(build ? 'built' : 'not built')+')');
   }
   
   consola.box({

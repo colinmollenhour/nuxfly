@@ -66,8 +66,7 @@ export async function loadConfig() {
     nuxflyDir: join(cwd, '.nuxfly'),
     flyTomlPath: join(cwd, '.nuxfly', 'fly.toml'),
     flyTomlExists: existsSync(join(cwd, '.nuxfly', 'fly.toml')),
-    distPath: join(cwd, 'dist'),
-    distExists: existsSync(join(cwd, 'dist')),
+    distPath: join(cwd, '.output'),
   };
   
   consola.debug('Loaded configuration:', config);
@@ -227,15 +226,16 @@ export function getFlyTomlPath(config) {
 }
 
 /**
- * Check if dist directory exists
+ * Check if dist directory exists (checks filesystem on-demand)
  */
 export function hasDistDir(config) {
-  return config._runtime?.distExists || false;
+  const distPath = getDistPath(config);
+  return existsSync(distPath);
 }
 
 /**
  * Get dist directory path
  */
 export function getDistPath(config) {
-  return config._runtime?.distPath || join(process.cwd(), 'dist');
+  return config._runtime?.distPath || join(process.cwd(), '.output');
 }

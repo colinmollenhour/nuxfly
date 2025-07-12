@@ -25,7 +25,7 @@ export const ensureNuxflyDir = withErrorHandling(async (config) => {
 export const copyDistDir = withErrorHandling(async (config) => {
   const distPath = config._runtime?.distPath;
   const nuxflyDir = getNuxflyDir(config);
-  const targetDistPath = join(nuxflyDir, 'dist');
+  const targetDistPath = join(nuxflyDir, '.output');
   
   if (!existsSync(distPath)) {
     consola.debug('No dist directory found, skipping copy');

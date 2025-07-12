@@ -3,8 +3,8 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'nuxfly-test'
-primary_region = 'ord'
+app = 'nuxfly-test2'
+primary_region = 'iad'
 
 [build]
   dockerfile = 'Dockerfile'

@@ -11,6 +11,7 @@ import { importConfig } from './commands/import.mjs';
 import { generate } from './commands/generate.mjs';
 import { deploy } from './commands/deploy.mjs';
 import { studio } from './commands/studio.mjs';
+import { update } from './commands/update.mjs';
 import { proxy, shouldProxy } from './commands/proxy.mjs';
 
 // Global configuration
@@ -66,7 +67,7 @@ const main = defineCommand({
           type: 'string',
           description: 'Region to deploy to',
         },
-        'no-deploy': {
+        'deploy': {
           type: 'boolean',
           description: 'Skip deployment after launch',
           default: true,
@@ -105,6 +106,13 @@ const main = defineCommand({
         name: 'generate',
         description: 'Generate Fly deployment files in .nuxfly directory',
       },
+      args: {
+        'build': {
+          type: 'boolean',
+          description: 'Build the application before generating files',
+          default: false,
+        },
+      },
       async run({ args }) {
         const config = await ensureConfig();
         await generate(args, config);
@@ -120,6 +128,11 @@ const main = defineCommand({
         strategy: {
           type: 'string',
           description: 'Deployment strategy',
+        },
+        'build': {
+          type: 'boolean',
+          description: 'Skip building the application before deploying',
+          default: false,
         },
       },
       async run({ args }) {
@@ -148,6 +161,23 @@ const main = defineCommand({
       async run({ args }) {
         const config = await ensureConfig();
         await studio(args, config);
+      },
+    }),
+
+    update: defineCommand({
+      meta: {
+        name: 'update',
+        description: 'Update S3 buckets based on current configuration',
+      },
+      args: {
+        app: {
+          type: 'string',
+          description: 'App name to update buckets for',
+        },
+      },
+      async run({ args }) {
+        const config = await ensureConfig();
+        await update(args, config);
       },
     }),
   },

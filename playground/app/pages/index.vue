@@ -1,3 +1,43 @@
+<template>
+  <div class="flex flex-col items-center justify-center gap-4 min-h-screen">
+    <h1>Public Access Key: {{ config.nuxfly.publicBucket.s3AccessKeyId }}</h1>
+    <h1>Private Access Key: {{ config.nuxfly.privateBucket.s3AccessKeyId }}</h1>
+    <UCard class="w-full max-w-md">
+      <template #header>
+        <h1 class="font-bold text-xl text-center">Todo List</h1>
+      </template>
+
+      <div class="flex items-center gap-2 mb-4">
+        <UInput v-model="newTodo" class="flex-grow" placeholder="Add a new todo" @keyup.enter="addTodo" />
+        <UButton label="Add" @click="addTodo" />
+      </div>
+
+      <div v-for="todo in todos" :key="todo.id" class="flex items-center gap-2 py-2 border-b">
+        <UCheckbox :model-value="todo.completed" @update:model-value="updateTodo(todo)" />
+        <span :class="{ 'line-through': todo.completed }">{{ todo.title }}</span>
+      </div>
+    </UCard>
+
+    <UCard class="w-full max-w-md">
+      <template #header>
+        <h1 class="font-bold text-xl text-center">Image Gallery</h1>
+      </template>
+
+      <div class="flex items-center gap-2 mb-4">
+        <UInput type="file" @change="handleFileChange" :key="fileInputKey" />
+        <UButton label="Upload" @click="uploadImage" :disabled="!fileToUpload" />
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div v-for="image in images" :key="image">
+          <img :src="imageUrl(image)" class="w-full h-auto" />
+        </div>
+      </div>
+    </UCard>
+  </div>
+</template>
+
+
 <script setup lang="ts">
 const { data: todos, refresh } = useAsyncData("todos", () =>
   $fetch("/api/todos")
@@ -56,41 +96,3 @@ async function uploadImage() {
 const config = useRuntimeConfig();
 const imageUrl = (key: string) => `${config.public.s3PublicUrl}/${key}`;
 </script>
-
-<template>
-  <div class="flex flex-col items-center justify-center gap-4 min-h-screen">
-    <h1>{{ config.nuxfly.publicBucket.s3AccessKeyId }}</h1>
-    <UCard class="w-full max-w-md">
-      <template #header>
-        <h1 class="font-bold text-xl text-center">Todo List</h1>
-      </template>
-
-      <div class="flex items-center gap-2 mb-4">
-        <UInput v-model="newTodo" class="flex-grow" placeholder="Add a new todo" @keyup.enter="addTodo" />
-        <UButton label="Add" @click="addTodo" />
-      </div>
-
-      <div v-for="todo in todos" :key="todo.id" class="flex items-center gap-2 py-2 border-b">
-        <UCheckbox :model-value="todo.completed" @update:model-value="updateTodo(todo)" />
-        <span :class="{ 'line-through': todo.completed }">{{ todo.title }}</span>
-      </div>
-    </UCard>
-
-    <UCard class="w-full max-w-md">
-      <template #header>
-        <h1 class="font-bold text-xl text-center">Image Gallery</h1>
-      </template>
-
-      <div class="flex items-center gap-2 mb-4">
-        <UInput type="file" @change="handleFileChange" :key="fileInputKey" />
-        <UButton label="Upload" @click="uploadImage" :disabled="!fileToUpload" />
-      </div>
-
-      <div class="grid grid-cols-3 gap-2">
-        <div v-for="image in images" :key="image">
-          <img :src="imageUrl(image)" class="w-full h-auto" />
-        </div>
-      </div>
-    </UCard>
-  </div>
-</template>

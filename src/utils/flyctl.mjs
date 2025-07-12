@@ -108,6 +108,24 @@ export const executeFlyctlWithOutput = withErrorHandling(async (command, userArg
 });
 
 /**
+ * Execute flyctl command with output in a specific directory
+ */
+export const executeFlyctlWithOutputInDir = withErrorHandling(async (command, userArgs = [], config = {}, directory) => {
+  consola.debug(`Executing flyctl with output in directory: ${directory}`);
+  
+  const result = await executeFlyctl(command, userArgs, config, {
+    stdio: 'pipe',
+    cwd: directory,
+  });
+  
+  return {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    exitCode: result.exitCode,
+  };
+});
+
+/**
  * Execute flyctl command in a specific directory
  */
 export const executeFlyctlInDir = withErrorHandling(async (command, userArgs = [], config = {}, directory) => {
@@ -251,6 +269,10 @@ export const flyLaunch = withErrorHandling(async (options = {}, config = {}) => 
   
   if (options.noDeploy) {
     args.push('--no-deploy');
+  }
+  
+  if (options.noObjectStorage) {
+    args.push('--no-object-storage');
   }
   
   // Add any additional arguments

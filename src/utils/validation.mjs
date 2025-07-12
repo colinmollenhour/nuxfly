@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import { accessSync, existsSync, constants } from 'fs';
 import consola from 'consola';
 import { FlyTomlNotFoundError, NotNuxtProjectError, NuxflyError, withErrorHandling } from './errors.mjs';
 import { checkAppAccess, checkFlyAuth } from './flyctl.mjs';
@@ -240,8 +240,7 @@ export const preflightChecks = withErrorHandling(async (command, config, args = 
  */
 export function validateFilePermissions(filepath) {
   try {
-    const fs = require('fs');
-    fs.accessSync(filepath, fs.constants.R_OK | fs.constants.W_OK);
+    accessSync(filepath, constants.R_OK | constants.W_OK);
     return true;
   } catch {
     throw new NuxflyError(`No read/write access to ${filepath}`, {
@@ -255,8 +254,7 @@ export function validateFilePermissions(filepath) {
  */
 export function validateDirectoryWritable(dirpath) {
   try {
-    const fs = require('fs');
-    fs.accessSync(dirpath, fs.constants.W_OK);
+    accessSync(dirpath, constants.W_OK);
     return true;
   } catch {
     throw new NuxflyError(`Directory not writable: ${dirpath}`, {
