@@ -20,7 +20,7 @@ export const ensureNuxflyDir = withErrorHandling(async (config) => {
 });
 
 /**
- * Copy dist directory to .nuxfly/dist if it exists
+ * Copy .output directory to .nuxfly/.output if it exists
  */
 export const copyDistDir = withErrorHandling(async (config) => {
   const distPath = config._runtime?.distPath;
@@ -28,11 +28,11 @@ export const copyDistDir = withErrorHandling(async (config) => {
   const targetDistPath = join(nuxflyDir, '.output');
   
   if (!existsSync(distPath)) {
-    consola.debug('No dist directory found, skipping copy');
+    consola.debug('No .output directory found, skipping copy');
     return false;
   }
   
-  consola.debug(`Copying dist directory from ${distPath} to ${targetDistPath}`);
+  consola.debug(`Copying .output directory from ${distPath} to ${targetDistPath}`);
   
   try {
     // Remove existing dist directory if it exists
@@ -42,13 +42,13 @@ export const copyDistDir = withErrorHandling(async (config) => {
     
     // Copy directory recursively
     await cp(distPath, targetDistPath, { recursive: true });
-    consola.success('Copied dist directory to .nuxfly/dist');
+    consola.success('Copied .output directory to .nuxfly/.output');
     return true;
   } catch (error) {
     if (error.code === 'EACCES') {
       throw new PermissionError(distPath);
     }
-    throw new NuxflyError(`Failed to copy dist directory: ${error.message}`);
+    throw new NuxflyError(`Failed to copy .output directory: ${error.message}`);
   }
 });
 

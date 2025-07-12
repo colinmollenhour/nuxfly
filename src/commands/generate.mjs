@@ -38,7 +38,7 @@ export const generate = withErrorHandling(async (args, config) => {
     
     // Copy dist directory if it exists
     if (hasDistDir(config)) {
-      consola.info('Step 4: Copying dist directory...');
+      consola.info('Step 4: Copying .output directory...');
       await copyDistDir(config);
     } else {
       consola.debug('No dist directory found, skipping copy');
@@ -60,7 +60,6 @@ export const generate = withErrorHandling(async (args, config) => {
  */
 function displayGeneratedFiles(hasDistCopy, build) {
   const files = [
-    '📄 fly.toml (configuration)',
     '🐳 Dockerfile (container image)',
     '🚫 .dockerignore (build exclusions)',
   ];

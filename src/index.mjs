@@ -131,7 +131,7 @@ const main = defineCommand({
         },
         'build': {
           type: 'boolean',
-          description: 'Skip building the application before deploying',
+          description: 'Build the application before deploying',
           default: false,
         },
       },

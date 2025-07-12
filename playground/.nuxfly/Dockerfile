@@ -7,16 +7,16 @@ RUN apt-get -y update     && apt-get -y upgrade     && apt-get install -y sqlite
 # Install Litestream
 RUN curl -L https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.tar.gz | tar -xz -C /usr/local/bin
 
-# Install drizzle CLI
+# Install drizzle CLI and copy migrations
 COPY package.json /app/dist/db/package.json
 COPY package-lock.json /app/dist/db/package-lock.json
-RUN cd /app/dist/db && npm install drizzle-kit drizzle-orm
-
-# Copy app files
-COPY .output/server /app/dist
-COPY .output/public /app/public
 COPY drizzle.config.ts /app/dist/db/drizzle.config.ts
 COPY drizzle /app/dist/db/drizzle
+RUN cd /app/dist/db && npm install drizzle-kit drizzle-orm
+
+# Copy app files (assume already built)
+COPY .output/server /app/dist
+COPY .output/public /app/public
 
 # Create directory for SQLite database
 RUN mkdir -p /data

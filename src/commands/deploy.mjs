@@ -16,12 +16,7 @@ export const deploy = withErrorHandling(async (args, config) => {
   await validateDeploymentConfig(config);
   
   try {
-    // First, build the application to ensure dist is up to date
-    consola.info('Step 1: Building application...');
-    await buildApplication({ skipBuild: args.noBuild });
-    
-    // Then, generate all deployment files
-    consola.info('Step 2: Generating deployment files...');
+    // First, build the application to ensure .output is up to date
     await generate(args, config);
     
     // Get .nuxfly directory
@@ -45,7 +40,7 @@ export const deploy = withErrorHandling(async (args, config) => {
     consola.debug('Deploy options:', deployOptions);
     
     // Deploy the application
-    consola.info('Step 3: Deploying application...');
+    consola.info('Step 5: Deploying application...');
     await flyDeploy(deployOptions, config);
     
     consola.success('🎉 Deployment completed successfully!');
