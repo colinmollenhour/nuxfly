@@ -10,9 +10,6 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN apt-get -y update     && apt-get -y upgrade     && apt-get install -y sqlite3 curl ca-certificates
 
-# Install pnpm (needed to run server?)
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 # Install Litestream
 RUN curl -L https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.tar.gz | tar -xz -C /usr/local/bin
 

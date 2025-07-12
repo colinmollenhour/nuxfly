@@ -20,6 +20,7 @@
     "globals": "^16.3.0"
   },
   "dependencies": {
+    "@libsql/client": "^0.15.9",
     "@nuxt/kit": "^3.17.6",
     "c12": "^3.0.4",
     "citty": "^0.1.6",
