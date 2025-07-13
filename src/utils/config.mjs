@@ -55,8 +55,8 @@ export async function loadConfig() {
   config._runtime = {
     cwd,
     nuxflyDir: join(cwd, '.nuxfly'),
-    flyTomlPath: join(cwd, '.nuxfly', 'fly.toml'),
-    flyTomlExists: existsSync(join(cwd, '.nuxfly', 'fly.toml')),
+    flyTomlPath: join(cwd, 'fly.toml'),
+    flyTomlExists: existsSync(join(cwd, 'fly.toml')),
     distPath: join(cwd, '.output'),
   };
   
@@ -211,7 +211,7 @@ export function getNuxflyDir(config) {
  * Get the fly.toml path
  */
 export function getFlyTomlPath(config) {
-  return config._runtime?.flyTomlPath || join(process.cwd(), '.nuxfly', 'fly.toml');
+  return config._runtime?.flyTomlPath || join(process.cwd(), 'fly.toml');
 }
 
 /**

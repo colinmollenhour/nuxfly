@@ -5,7 +5,7 @@ import { checkAppAccess, checkFlyAuth } from './flyctl.mjs';
 import { getFlyTomlPath, getAppName } from './config.mjs';
 
 /**
- * Validate that .nuxfly/fly.toml exists
+ * Validate that fly.toml exists in project root
  */
 export const validateFlyTomlExists = withErrorHandling((config) => {
   const flyTomlPath = getFlyTomlPath(config);

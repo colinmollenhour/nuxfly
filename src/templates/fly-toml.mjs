@@ -25,7 +25,7 @@ export function generateFlyToml(config = {}) {
   if (build.dockerfile) {
     toml += `  dockerfile = "${build.dockerfile}"\n`;
   } else {
-    toml += '  dockerfile = "Dockerfile"\n';
+    toml += '  dockerfile = ".nuxfly/Dockerfile"\n';
   }
   toml += '\n';
 
@@ -235,19 +235,4 @@ export function validateFlyTomlConfig(config) {
   }
 
   return errors;
-}
-
-/**
- * Generate minimal fly.toml for quick setup
- */
-export function generateMinimalFlyToml(appName, region = 'ord') {
-  return generateFlyToml({
-    app: appName,
-    region,
-    memory: '512mb',
-    instances: { min: 1, max: 3 },
-    env: {
-      NODE_ENV: 'production',
-    },
-  });
 }

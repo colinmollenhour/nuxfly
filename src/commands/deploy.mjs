@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { flyDeploy, checkAppAccess } from '../utils/flyctl.mjs';
 import { validateDeploymentConfig } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
-import { loadConfig, getAppName, getFlyTomlPath, hasFlyToml, getNuxflyDir } from '../utils/config.mjs';
+import { loadConfig, getAppName, getFlyTomlPath, hasFlyToml } from '../utils/config.mjs';
 import { parseFlyToml } from '../templates/fly-toml.mjs';
 import { getOrgName, createLitestreamBucket, createPublicBucket, createPrivateBucket, getExistingBuckets } from '../utils/buckets.mjs';
 import { generate } from './generate.mjs';
@@ -140,13 +140,10 @@ export const deploy = withErrorHandling(async (args, config) => {
     // Check and create any missing buckets before deployment
     await ensureBucketsExist(config);
     
-    // Get .nuxfly directory
-    const nuxflyDir = getNuxflyDir(config);
-    
     // Prepare deploy options
     const deployOptions = {
       strategy: args.strategy,
-      cwd: nuxflyDir, // Deploy from .nuxfly directory
+      cwd: process.cwd(), // Deploy from project root instead of .nuxfly
       extraArgs: [], // Will be populated with any additional args
     };
     

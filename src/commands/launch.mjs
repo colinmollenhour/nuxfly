@@ -2,7 +2,7 @@ import { join } from 'path';
 import { readFile } from 'fs/promises';
 import consola from 'consola';
 import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
-import { ensureNuxflyDir, copyFile, fileExists } from '../utils/filesystem.mjs';
+import { ensureNuxflyDir, fileExists } from '../utils/filesystem.mjs';
 import { validateLaunchCommand } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { createS3Buckets } from '../utils/buckets.mjs';
@@ -17,14 +17,14 @@ export const launch = withErrorHandling(async (args, config) => {
   await validateLaunchCommand(args);
   
   // Ensure .nuxfly directory exists
-  const nuxflyDir = await ensureNuxflyDir(config);
+  await ensureNuxflyDir(config);
   
-  // Check if fly.toml already exists in .nuxfly directory
-  const nuxflyFlyToml = join(nuxflyDir, 'fly.toml');
-  if (fileExists(nuxflyFlyToml)) {
+  // Check if fly.toml already exists in project root
+  const rootFlyToml = join(process.cwd(), 'fly.toml');
+  if (fileExists(rootFlyToml)) {
     consola.error('❌ App already exists!');
-    consola.info(`Found existing fly.toml at: ${nuxflyFlyToml}`);
-    consola.info('If you want to recreate the app, please remove the existing .nuxfly/fly.toml file first.');
+    consola.info(`Found existing fly.toml at: ${rootFlyToml}`);
+    consola.info('If you want to recreate the app, please remove the existing fly.toml file first.');
     process.exit(1);
   }
   
@@ -52,24 +52,13 @@ export const launch = withErrorHandling(async (args, config) => {
     consola.info('Running fly launch...');
     await flyLaunch(launchOptions, config);
     
-    // Move generated fly.toml to .nuxfly directory
-    const rootFlyToml = join(process.cwd(), 'fly.toml');
-    
     // Check if fly.toml was created in root
+    const rootFlyToml = join(process.cwd(), 'fly.toml');
     if (fileExists(rootFlyToml)) {
-      consola.info('Moving fly.toml to .nuxfly directory...');
-      
-      // Copy to .nuxfly directory
-      copyFile(rootFlyToml, nuxflyFlyToml);
-      
-      // Remove from root directory
-      const { unlink } = await import('fs/promises');
-      await unlink(rootFlyToml);
-      
-      consola.success(`Saved fly.toml to ${nuxflyFlyToml}`);
+      consola.success(`fly.toml created at ${rootFlyToml}`);
       
       // Create SQLite volume after successful launch
-      const region = await extractRegionFromFlyToml(nuxflyFlyToml);
+      const region = await extractRegionFromFlyToml(rootFlyToml);
       if (region) {
         const volumeSize = args.size || '1';
         await createSqliteVolume(region, volumeSize, config);

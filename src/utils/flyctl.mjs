@@ -26,8 +26,14 @@ export const checkFlyctlAvailable = withErrorHandling(async () => {
 export function buildFlyctlArgs(command, userArgs = [], config = {}) {
   const args = [command];
   
-  // Add config flag if .nuxfly/fly.toml exists
-  // Skip config flag for launch command to avoid creating fly.toml in wrong location
+  // Always add dockerfile and dockerignore flags for deployment commands
+  if (['launch'].includes(command)) {
+    args.push('--dockerfile', '.nuxfly/Dockerfile');
+    args.push('--ignorefile', '.nuxfly/.dockerignore');
+    consola.debug('Using dockerfile: .nuxfly/Dockerfile, ignorefile: .nuxfly/.dockerignore');
+  }
+  
+  // Add config flag if fly.toml exists in root (for non-launch commands)
   if (command !== 'storage' && command !== 'launch' && config._runtime?.flyTomlExists) {
     const flyTomlPath = getFlyTomlPath(config);
     args.push('--config', flyTomlPath);
@@ -147,7 +153,7 @@ export const streamFlyctl = withErrorHandling(async (command, userArgs = [], con
   
   const execOptions = {
     stdio: 'inherit',
-    cwd: config._runtime?.nuxflyDir,
+    cwd: process.cwd(),
     env: {
       ...process.env,
       ...options.env,
