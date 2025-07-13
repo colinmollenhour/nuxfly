@@ -194,7 +194,7 @@ export async function createS3Buckets(appName, config) {
   const orgName = await getOrgName(appName, config);
   if (!orgName) {
     consola.warn('Could not determine organization name. Bucket creation may fail.');
-    consola.info('You can create buckets manually later with the update command.');
+    consola.info('You can create buckets manually later during deployment.');
     return;
   }
   consola.debug(`Using organization: ${orgName}`);

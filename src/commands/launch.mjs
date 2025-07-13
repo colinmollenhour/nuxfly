@@ -175,13 +175,13 @@ function displayNextSteps(appName) {
     message: `Your app "${appName}" has been created on Fly.io but is not yet deployed.
 
 Next steps:
-  1. Configure your app: Edit your nuxt.config.js nuxfly section to configure which buckets should be created
-  2. Create your storage buckets: nuxfly buckets create
-  3. Generate deployment files: nuxfly generate
-  4. Inspect everything and set additional environment variables (optional): nuxfly secrets set KEY=value
-  5. Deploy your app: nuxfly deploy
+  1. Configure your app: Edit your nuxt.config.js nuxfly section to configure additional buckets if needed
+  2. Generate deployment files: nuxfly generate
+  3. Inspect everything and set additional environment variables (optional): nuxfly secrets set KEY=value
+  4. Deploy your app: nuxfly deploy
 
-Your fly.toml is saved in .nuxfly/fly.toml for version control.`,
+Your fly.toml is saved in .nuxfly/fly.toml for version control.
+Storage buckets have been created based on your current configuration.`,
     style: {
       borderColor: 'green',
       padding: 1,

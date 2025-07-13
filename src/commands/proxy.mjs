@@ -53,7 +53,6 @@ export function shouldProxy(command) {
     'generate',
     'deploy',
     'studio',
-    'update',
     'help',
     '--help',
     '-h',

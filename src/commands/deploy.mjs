@@ -1,9 +1,128 @@
 import consola from 'consola';
-import { flyDeploy } from '../utils/flyctl.mjs';
+import { readFileSync } from 'fs';
+import { flyDeploy, checkAppAccess } from '../utils/flyctl.mjs';
 import { validateDeploymentConfig } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
-import { getNuxflyDir } from '../utils/config.mjs';
+import { loadConfig, getAppName, getFlyTomlPath, hasFlyToml, getNuxflyDir } from '../utils/config.mjs';
+import { parseFlyToml } from '../templates/fly-toml.mjs';
+import { getOrgName, createLitestreamBucket, createPublicBucket, createPrivateBucket, getExistingBuckets } from '../utils/buckets.mjs';
 import { generate } from './generate.mjs';
+
+/**
+ * Get app name from fly.toml file
+ */
+function getAppNameFromFlyToml(config) {
+  try {
+    if (!hasFlyToml(config)) {
+      return null;
+    }
+    
+    const flyTomlPath = getFlyTomlPath(config);
+    const flyTomlContent = readFileSync(flyTomlPath, 'utf8');
+    const flyConfig = parseFlyToml(flyTomlContent);
+    
+    return flyConfig.app;
+  } catch (error) {
+    consola.debug('Failed to read app name from fly.toml:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Check and create any missing S3 buckets based on current configuration
+ */
+async function ensureBucketsExist(config) {
+  consola.info('🪣 Checking S3 buckets...');
+  
+  // Get app name from fly.toml or config
+  const appName = getAppNameFromFlyToml(config) || getAppName(config);
+  if (!appName) {
+    consola.debug('No app name found, skipping bucket check');
+    return;
+  }
+  
+  try {
+    // Validate app exists and user has access
+    const hasAccess = await checkAppAccess(appName, config);
+    if (!hasAccess) {
+      consola.debug(`Cannot access app "${appName}", skipping bucket check`);
+      return;
+    }
+    
+    // Get organization name for storage commands
+    const orgName = await getOrgName(appName, config);
+    if (!orgName) {
+      consola.debug('Could not determine organization name, skipping bucket check');
+      return;
+    }
+    
+    // Load Nuxt config to detect bucket requirements
+    const nuxtConfig = (await loadConfig()).nuxt;
+    const nuxflyConfig = nuxtConfig?.nuxfly || {};
+    
+    // Check which buckets are configured
+    const needsPublicBucket = !!nuxflyConfig.publicStorage;
+    const needsPrivateBucket = !!nuxflyConfig.privateStorage;
+    const needsLitestreamBucket = !!nuxflyConfig.litestream;
+
+    if (!needsPublicBucket && !needsPrivateBucket && !needsLitestreamBucket) {
+      consola.debug('No bucket configurations found');
+      return;
+    }
+    
+    // Check existing buckets to avoid duplicates
+    const existingBuckets = await getExistingBuckets(appName, config);
+    
+    let bucketsCreated = 0;
+    
+    // Create litestream bucket if needed and doesn't exist
+    if (needsLitestreamBucket) {
+      const litestreamBucketName = `${appName}-litestream`;
+      if (existingBuckets.includes(litestreamBucketName)) {
+        consola.debug(`Litestream bucket already exists: ${litestreamBucketName}`);
+      } else {
+        consola.info(`Creating missing litestream bucket: ${litestreamBucketName}`);
+        await createLitestreamBucket(appName, orgName, config);
+        bucketsCreated++;
+      }
+    }
+    
+    // Create public bucket if needed and doesn't exist
+    if (needsPublicBucket) {
+      const publicBucketName = `${appName}-public`;
+      if (existingBuckets.includes(publicBucketName)) {
+        consola.debug(`Public bucket already exists: ${publicBucketName}`);
+      } else {
+        consola.info(`Creating missing public bucket: ${publicBucketName}`);
+        await createPublicBucket(appName, orgName, config);
+        bucketsCreated++;
+      }
+    }
+    
+    // Create private bucket if needed and doesn't exist
+    if (needsPrivateBucket) {
+      const privateBucketName = `${appName}-private`;
+      if (existingBuckets.includes(privateBucketName)) {
+        consola.debug(`Private bucket already exists: ${privateBucketName}`);
+      } else {
+        consola.info(`Creating missing private bucket: ${privateBucketName}`);
+        await createPrivateBucket(appName, orgName, config);
+        bucketsCreated++;
+      }
+    }
+    
+    if (bucketsCreated > 0) {
+      consola.success(`Created ${bucketsCreated} missing bucket(s)`);
+    } else {
+      consola.debug('All configured buckets already exist');
+    }
+    
+  } catch (error) {
+    // Don't fail deployment if bucket check fails
+    consola.warn(`Failed to check/create buckets: ${error.message}`);
+    consola.debug('Continuing with deployment...');
+  }
+}
 
 /**
  * Deploy command - generates files and deploys to Fly.io
@@ -17,6 +136,9 @@ export const deploy = withErrorHandling(async (args, config) => {
   try {
     // First, build the application to ensure .output is up to date
     await generate(args, config);
+    
+    // Check and create any missing buckets before deployment
+    await ensureBucketsExist(config);
     
     // Get .nuxfly directory
     const nuxflyDir = getNuxflyDir(config);

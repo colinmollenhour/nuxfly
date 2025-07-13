@@ -11,7 +11,6 @@ import { importConfig } from './commands/import.mjs';
 import { generate } from './commands/generate.mjs';
 import { deploy } from './commands/deploy.mjs';
 import { studio } from './commands/studio.mjs';
-import { update } from './commands/update.mjs';
 import { proxy, shouldProxy } from './commands/proxy.mjs';
 
 // Global configuration
@@ -164,22 +163,6 @@ const main = defineCommand({
       },
     }),
 
-    update: defineCommand({
-      meta: {
-        name: 'update',
-        description: 'Update S3 buckets based on current configuration',
-      },
-      args: {
-        app: {
-          type: 'string',
-          description: 'App name to update buckets for',
-        },
-      },
-      async run({ args }) {
-        const config = await ensureConfig();
-        await update(args, config);
-      },
-    }),
   },
   async run({ args }) {
     // Set up logging level
