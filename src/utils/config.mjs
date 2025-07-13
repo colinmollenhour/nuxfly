@@ -1,9 +1,9 @@
-import { loadConfig as loadC12Config } from 'c12';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import consola from 'consola';
 import { ConfigError, NotNuxtProjectError, validateRequired } from './errors.mjs';
 import { loadNuxtConfig } from '@nuxt/kit';
+import { parseFlyToml } from '../templates/fly-toml.mjs';
 
 /**
  * Default configuration values
@@ -30,7 +30,7 @@ export async function loadConfig() {
     throw new NotNuxtProjectError();
   }
 
-  // Load configuration using c12
+  // Load configuration using nuxt/kit
   const nuxtConfig = await loadNuxtConfig({
     rootDir: cwd,
     configFile: 'nuxt.config.ts',
@@ -45,6 +45,16 @@ export async function loadConfig() {
   const config = mergeConfig(DEFAULT_CONFIG, nuxflyConfig?.flyApp || {});
   config.nuxt = nuxtConfig;
   
+  // Read app name from fly.toml if it exists
+  const flyTomlPath = join(cwd, 'fly.toml');
+  const flyTomlExists = existsSync(flyTomlPath);
+  let flyConfig = {};
+  if (flyTomlExists) {
+    const flyTomlContent = readFileSync(flyTomlPath, 'utf8');
+    flyConfig = parseFlyToml(flyTomlContent);
+    config.app = flyConfig.app;
+  }
+
   // Override with environment variables
   applyEnvironmentOverrides(config);
   
@@ -55,8 +65,8 @@ export async function loadConfig() {
   config._runtime = {
     cwd,
     nuxflyDir: join(cwd, '.nuxfly'),
-    flyTomlPath: join(cwd, 'fly.toml'),
-    flyTomlExists: existsSync(join(cwd, 'fly.toml')),
+    flyConfig,
+    flyTomlExists,
     distPath: join(cwd, '.output'),
   };
   

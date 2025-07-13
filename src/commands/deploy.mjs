@@ -1,32 +1,10 @@
 import consola from 'consola';
-import { readFileSync } from 'fs';
 import { flyDeploy, checkAppAccess } from '../utils/flyctl.mjs';
 import { validateDeploymentConfig } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
-import { loadConfig, getAppName, getFlyTomlPath, hasFlyToml } from '../utils/config.mjs';
-import { parseFlyToml } from '../templates/fly-toml.mjs';
+import { loadConfig, getAppName, hasDistDir } from '../utils/config.mjs';
 import { getOrgName, createLitestreamBucket, createPublicBucket, createPrivateBucket, getExistingBuckets } from '../utils/buckets.mjs';
-import { generate } from './generate.mjs';
-
-/**
- * Get app name from fly.toml file
- */
-function getAppNameFromFlyToml(config) {
-  try {
-    if (!hasFlyToml(config)) {
-      return null;
-    }
-    
-    const flyTomlPath = getFlyTomlPath(config);
-    const flyTomlContent = readFileSync(flyTomlPath, 'utf8');
-    const flyConfig = parseFlyToml(flyTomlContent);
-    
-    return flyConfig.app;
-  } catch (error) {
-    consola.debug('Failed to read app name from fly.toml:', error.message);
-    return null;
-  }
-}
+import { buildApplication } from '../utils/build.mjs';
 
 /**
  * Check and create any missing S3 buckets based on current configuration
@@ -35,11 +13,7 @@ async function ensureBucketsExist(config) {
   consola.info('🪣 Checking S3 buckets...');
   
   // Get app name from fly.toml or config
-  const appName = getAppNameFromFlyToml(config) || getAppName(config);
-  if (!appName) {
-    consola.debug('No app name found, skipping bucket check');
-    return;
-  }
+  const appName = getAppName(config);
   
   try {
     // Validate app exists and user has access
@@ -50,7 +24,7 @@ async function ensureBucketsExist(config) {
     }
     
     // Get organization name for storage commands
-    const orgName = await getOrgName(appName, config);
+    const orgName = await getOrgName(config);
     if (!orgName) {
       consola.debug('Could not determine organization name, skipping bucket check');
       return;
@@ -128,15 +102,21 @@ async function ensureBucketsExist(config) {
  * Deploy command - generates files and deploys to Fly.io
  */
 export const deploy = withErrorHandling(async (args, config) => {
-  consola.info('🚀 Deploying to Fly.io...');
+  consola.info(`🚀 Deploying ${config.app} to Fly.io...`);
   
   // Validate deployment configuration
   await validateDeploymentConfig(config);
   
+  // Validate Nuxt project structure
+  if (!hasDistDir(config) && !args.build) {
+    consola.error('❌ No .output directory found! Please build your Nuxt application first.');
+    process.exit(1);
+  }
+
   try {
-    // First, build the application to ensure .output is up to date
-    await generate(args, config);
-    
+    // Build the application first (unless --no-build is specified) to ensure .output is up to date
+    await buildApplication({ skipBuild: !args.build });
+
     // Check and create any missing buckets before deployment
     await ensureBucketsExist(config);
     
@@ -158,7 +138,6 @@ export const deploy = withErrorHandling(async (args, config) => {
     consola.debug('Deploy options:', deployOptions);
     
     // Deploy the application
-    consola.info('Step 5: Deploying application...');
     await flyDeploy(deployOptions, config);
     
     consola.success('🎉 Deployment completed successfully!');

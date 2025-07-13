@@ -29,8 +29,7 @@ export function buildFlyctlArgs(command, userArgs = [], config = {}) {
   // Always add dockerfile and dockerignore flags for deployment commands
   if (['launch'].includes(command)) {
     args.push('--dockerfile', '.nuxfly/Dockerfile');
-    args.push('--ignorefile', '.nuxfly/.dockerignore');
-    consola.debug('Using dockerfile: .nuxfly/Dockerfile, ignorefile: .nuxfly/.dockerignore');
+    args.push('--dockerignore-from-gitignore'); // Suppress option as we will overwrite it anyway
   }
   
   // Add config flag if fly.toml exists in root (for non-launch commands)

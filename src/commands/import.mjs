@@ -59,8 +59,7 @@ function displayNextSteps(appName) {
 Next steps:
   1. Review the configuration: cat .nuxfly/fly.toml
   2. Update your nuxt.config.js nuxfly section if needed
-  3. Generate deployment files: nuxfly generate
-  4. Deploy your app: nuxfly deploy
+  3. Deploy your app: nuxfly deploy
 
 Your fly.toml is now available in .nuxfly/fly.toml`,
     style: {

@@ -2,10 +2,11 @@ import { join } from 'path';
 import { readFile } from 'fs/promises';
 import consola from 'consola';
 import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
-import { ensureNuxflyDir, fileExists } from '../utils/filesystem.mjs';
+import { ensureNuxflyDir, fileExists, writeFile } from '../utils/filesystem.mjs';
 import { validateLaunchCommand } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { createS3Buckets } from '../utils/buckets.mjs';
+import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 
 /**
  * Launch command - runs fly launch and saves config to .nuxfly/fly.toml
@@ -17,7 +18,7 @@ export const launch = withErrorHandling(async (args, config) => {
   await validateLaunchCommand(args);
   
   // Ensure .nuxfly directory exists
-  await ensureNuxflyDir(config);
+  const nuxflyDir = await ensureNuxflyDir(config);
   
   // Check if fly.toml already exists in project root
   const rootFlyToml = join(process.cwd(), 'fly.toml');
@@ -28,6 +29,14 @@ export const launch = withErrorHandling(async (args, config) => {
     process.exit(1);
   }
   
+  // Generate Dockerfile
+  if (!fileExists(join(nuxflyDir, 'Dockerfile'))) {
+    const dockerfileContent = generateDockerfile({
+      nodeVersion: config.nodeVersion,
+    });
+    await writeFile(join(nuxflyDir, 'Dockerfile'), dockerfileContent);
+  }
+
   // Prepare launch options
   const launchOptions = {
     name: args.name,
@@ -57,20 +66,33 @@ export const launch = withErrorHandling(async (args, config) => {
     if (fileExists(rootFlyToml)) {
       consola.success(`fly.toml created at ${rootFlyToml}`);
       
+      // Overwrite .dockerignore file that was generated incorrectly by flyctl launch
+      const dockerignoreContent = generateDockerignore();
+      await writeFile(join(process.cwd(), '.dockerignore'), dockerignoreContent);
+      
+      // TODO - add all other generated files here
+      consola.info('TODO: Add other generated files here...');
+
       // Create SQLite volume after successful launch
       const region = await extractRegionFromFlyToml(rootFlyToml);
       if (region) {
         const volumeSize = args.size || '1';
-        await createSqliteVolume(region, volumeSize, config);
+        try {
+          await createSqliteVolume(region, volumeSize, config);
+        } catch (error) {
+          throw new NuxflyError(`Failed to create SQLite volume: ${error.message}`, {
+            suggestion: 'You can create the volume manually with: flyctl volumes create sqlite_data --region <region> --size <size>',
+          });
+        }
       } else {
-        consola.warn('Could not extract region from fly.toml. Volume creation skipped.');
-        consola.info('You can create the volume manually later with:');
-        consola.info(`  flyctl volumes create sqlite_data --region <region> --size ${args.size || '1'}`);
+        throw new NuxflyError(`Failed to find the region from fly.toml`, {
+          suggestion: 'You can create the volume manually with: flyctl volumes create sqlite_data --region <region> --size <size>',
+        });
       }
       
       // Create S3 buckets after successful launch
       try {
-        await createS3Buckets(args.name || 'your-app', config);
+        await createS3Buckets(config);
       } catch (error) {
         throw new NuxflyError(`Failed to create S3 buckets: ${error.message}`, {
           suggestion: 'You can create buckets manually later with: nuxfly buckets create',
@@ -164,13 +186,11 @@ function displayNextSteps(appName) {
     message: `Your app "${appName}" has been created on Fly.io but is not yet deployed.
 
 Next steps:
-  1. Configure your app: Edit your nuxt.config.js nuxfly section to configure additional buckets if needed
-  2. Generate deployment files: nuxfly generate
-  3. Inspect everything and set additional environment variables (optional): nuxfly secrets set KEY=value
-  4. Deploy your app: nuxfly deploy
+  1. Edit your nuxt.config.js nuxfly section to configure additional buckets if needed
+  2. Inspect everything in .nuxfly/ and set additional environment variables (optional): nuxfly secrets set KEY=value
+  3. Deploy your app: nuxfly deploy
 
-Your fly.toml is saved in .nuxfly/fly.toml for version control.
-Storage buckets have been created based on your current configuration.`,
+If you're using version control, it is safe to commit your fly.toml file and the contents of ./nuxfly.`,
     style: {
       borderColor: 'green',
       padding: 1,

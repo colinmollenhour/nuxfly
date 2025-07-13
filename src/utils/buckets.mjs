@@ -5,9 +5,9 @@ import { loadConfig } from './config.mjs';
 /**
  * Get organization name from flyctl status
  */
-export async function getOrgName(appName, config) {
+export async function getOrgName(config) {
   try {
-    const result = await executeFlyctlWithOutput('status', ['--app', appName], config);
+    const result = await executeFlyctlWithOutput('status', config);
     
     // Parse the output to extract organization name
     const lines = result.stdout.split('\n');
@@ -85,8 +85,8 @@ export async function setFlySecrets(appName, config, secrets) {
 /**
  * Create litestream bucket for database backups
  */
-export async function createLitestreamBucket(appName, orgName, config) {
-  const bucketName = `${appName}-litestream`;
+export async function createLitestreamBucket(orgName, config) {
+  const bucketName = `${config.app}-litestream`;
   consola.info(`Creating litestream bucket: ${bucketName}`);
   
   try {
@@ -98,7 +98,7 @@ export async function createLitestreamBucket(appName, orgName, config) {
     
     if (credentials) {
       // Set secrets with LITESTREAM_ prefix to match litestream.yml
-      await setFlySecrets(appName, config, {
+      await setFlySecrets(config.app, config, {
         'LITESTREAM_S3_ACCESS_KEY_ID': credentials.accessKeyId,
         'LITESTREAM_S3_SECRET_ACCESS_KEY': credentials.secretAccessKey,
         'LITESTREAM_S3_ENDPOINT_URL': credentials.endpointUrl,
@@ -119,8 +119,8 @@ export async function createLitestreamBucket(appName, orgName, config) {
 /**
  * Create public bucket for public assets
  */
-export async function createPublicBucket(appName, orgName, config) {
-  const bucketName = `${appName}-public`;
+export async function createPublicBucket(orgName, config) {
+  const bucketName = `${config.app}-public`;
   consola.info(`Creating public bucket: ${bucketName}`);
   
   try {
@@ -132,7 +132,7 @@ export async function createPublicBucket(appName, orgName, config) {
     
     if (credentials) {
       // Set secrets with NUXT_NUXFLY_PUBLIC_BUCKET_S3_ prefix to override runtime config
-      await setFlySecrets(appName, config, {
+      await setFlySecrets(config.app, config, {
         'NUXT_NUXFLY_PUBLIC_BUCKET_S3_ACCESS_KEY_ID': credentials.accessKeyId,
         'NUXT_NUXFLY_PUBLIC_BUCKET_S3_SECRET_ACCESS_KEY': credentials.secretAccessKey,
         'NUXT_NUXFLY_PUBLIC_BUCKET_S3_ENDPOINT': credentials.endpointUrl,
@@ -153,8 +153,8 @@ export async function createPublicBucket(appName, orgName, config) {
 /**
  * Create private bucket for private storage
  */
-export async function createPrivateBucket(appName, orgName, config) {
-  const bucketName = `${appName}-private`;
+export async function createPrivateBucket(orgName, config) {
+  const bucketName = `${config.app}-private`;
   consola.info(`Creating private bucket: ${bucketName}`);
   
   try {
@@ -166,7 +166,7 @@ export async function createPrivateBucket(appName, orgName, config) {
     
     if (credentials) {
       // Set secrets with NUXT_NUXFLY_PRIVATE_BUCKET_S3_ prefix to override runtime config
-      await setFlySecrets(appName, config, {
+      await setFlySecrets(config.app, config, {
         'NUXT_NUXFLY_PRIVATE_BUCKET_S3_ACCESS_KEY_ID': credentials.accessKeyId,
         'NUXT_NUXFLY_PRIVATE_BUCKET_S3_SECRET_ACCESS_KEY': credentials.secretAccessKey,
         'NUXT_NUXFLY_PRIVATE_BUCKET_S3_ENDPOINT': credentials.endpointUrl,
@@ -187,11 +187,11 @@ export async function createPrivateBucket(appName, orgName, config) {
 /**
  * Create S3 buckets based on configuration
  */
-export async function createS3Buckets(appName, config) {
+export async function createS3Buckets(config) {
   consola.info('🪣 Creating S3 buckets...');
   
   // Get organization name for storage commands
-  const orgName = await getOrgName(appName, config);
+  const orgName = await getOrgName(config);
   if (!orgName) {
     consola.warn('Could not determine organization name. Bucket creation may fail.');
     consola.info('You can create buckets manually later during deployment.');
@@ -205,17 +205,17 @@ export async function createS3Buckets(appName, config) {
   
   // Create litestream bucket
   if (nuxflyConfig.litestream) {
-    await createLitestreamBucket(appName, orgName, config);
+    await createLitestreamBucket(orgName, config);
   }
   
   // Create public bucket if configured
   if (nuxflyConfig.publicBucket) {
-    await createPublicBucket(appName, orgName, config);
+    await createPublicBucket(orgName, config);
   }
   
   // Create private bucket if configured
   if (nuxflyConfig.privateBucket) {
-    await createPrivateBucket(appName, orgName, config);
+    await createPrivateBucket(orgName, config);
   }
 }
 

@@ -16,43 +16,59 @@ export const generate = withErrorHandling(async (args, config) => {
   
   // Validate that fly.toml exists
   validateFlyTomlExists(config);
+
+  // Validate Nuxt project structure
+  if (!hasDistDir(config) && !args.build) {
+    consola.error('❌ No .output directory found! Please build your Nuxt application first.');
+    process.exit(1);
+  }
+
+  let step = 1;
   
   // Build the application first (unless --no-build is specified)
-  consola.info('Step 1: Building application...');
-  await buildApplication({ skipBuild: !args.build });
+  if (args.build) {
+    consola.info(`Step ${step++}: Building application...`);
+    await buildApplication({ skipBuild: !args.build });
+  }
   
   // Ensure .nuxfly directory exists
   const nuxflyDir = await ensureNuxflyDir(config);
   
   try {
     // Generate fly.toml in project root
-    consola.info('Step 2: Generating fly.toml...');
+    consola.info(`Step ${step++}: Generating fly.toml...`);
     const flyTomlContent = generateFlyToml({
       app: config.app,
       region: config.region || 'ord',
       memory: config.memory || '512mb',
-      instances: config.instances || { min: 1, max: 3 },
+      instances: config.instances || { min: 1 },
       env: config.env || {},
       volumes: config.volumes || [],
       build: { dockerfile: '.nuxfly/Dockerfile' },
+      statics: [
+        // Default static paths for Nuxt applications
+        { guest_path: '/app/public/_fonts', url_prefix: '/_fonts' },
+        { guest_path: '/app/public/_nuxt', url_prefix: '/_nuxt' },
+        { guest_path: '/app/public/favicon.ico', url_prefix: '/favicon.ico' },
+      ],
     });
     await writeFile(join(process.cwd(), 'fly.toml'), flyTomlContent);
     
     // Generate Dockerfile
-    consola.info(`Step 3: Generating Dockerfile...`);
+    consola.info(`Step ${step++}: Generating Dockerfile...`);
     const dockerfileContent = generateDockerfile({
       nodeVersion: config.nodeVersion,
     });
     await writeFile(join(nuxflyDir, 'Dockerfile'), dockerfileContent);
     
     // Generate .dockerignore
-    consola.info('Step 4: Generating .dockerignore...');
+    consola.info(`Step ${step++}: Generating .dockerignore...`);
     const dockerignoreContent = generateDockerignore();
-    await writeFile(join(nuxflyDir, '.dockerignore'), dockerignoreContent);
+    await writeFile(join(process.cwd(), '.dockerignore'), dockerignoreContent);
     
     // Copy dist directory if it exists
     if (hasDistDir(config)) {
-      consola.info('Step 5: Copying .output directory...');
+      consola.info(`Step ${step++}: Copying .output directory...`);
       await copyDistDir(config);
     } else {
       consola.debug('No dist directory found, skipping copy');
