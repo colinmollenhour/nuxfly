@@ -2,7 +2,7 @@ import { join } from 'path';
 import { readFile } from 'fs/promises';
 import consola from 'consola';
 import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
-import { ensureNuxflyDir, copyFile } from '../utils/filesystem.mjs';
+import { ensureNuxflyDir, copyFile, fileExists } from '../utils/filesystem.mjs';
 import { validateLaunchCommand } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { createS3Buckets } from '../utils/buckets.mjs';
@@ -18,6 +18,15 @@ export const launch = withErrorHandling(async (args, config) => {
   
   // Ensure .nuxfly directory exists
   const nuxflyDir = await ensureNuxflyDir(config);
+  
+  // Check if fly.toml already exists in .nuxfly directory
+  const nuxflyFlyToml = join(nuxflyDir, 'fly.toml');
+  if (fileExists(nuxflyFlyToml)) {
+    consola.error('❌ App already exists!');
+    consola.info(`Found existing fly.toml at: ${nuxflyFlyToml}`);
+    consola.info('If you want to recreate the app, please remove the existing .nuxfly/fly.toml file first.');
+    process.exit(1);
+  }
   
   // Prepare launch options
   const launchOptions = {
@@ -45,10 +54,8 @@ export const launch = withErrorHandling(async (args, config) => {
     
     // Move generated fly.toml to .nuxfly directory
     const rootFlyToml = join(process.cwd(), 'fly.toml');
-    const nuxflyFlyToml = join(nuxflyDir, 'fly.toml');
     
     // Check if fly.toml was created in root
-    const { fileExists } = await import('../utils/filesystem.mjs');
     if (fileExists(rootFlyToml)) {
       consola.info('Moving fly.toml to .nuxfly directory...');
       
@@ -73,7 +80,14 @@ export const launch = withErrorHandling(async (args, config) => {
       }
       
       // Create S3 buckets after successful launch
-      await createS3Buckets(args.name || 'your-app', config);
+      try {
+        await createS3Buckets(args.name || 'your-app', config);
+      } catch (error) {
+        throw new NuxflyError(`Failed to create S3 buckets: ${error.message}`, {
+          suggestion: 'You can create buckets manually later with: nuxfly buckets create',
+          cause: error,
+        });
+      }
     } else {
       consola.warn('No fly.toml was generated. Launch may have been cancelled or failed.');
     }
@@ -124,14 +138,31 @@ async function createSqliteVolume(region, size, config) {
   consola.info(`Creating SQLite volume (${size}GB) in region ${region}...`);
   
   try {
+    // Check if sqlite_data volume already exists
+    const { executeFlyctlWithOutput } = await import('../utils/flyctl.mjs');
+    const volumeListResult = await executeFlyctlWithOutput('volumes', ['list'], config);
+    
+    // Parse the output to check for existing sqlite_data volume
+    const existingVolumes = volumeListResult.stdout.split('\n');
+    const sqliteVolumeExists = existingVolumes.some(line =>
+      line.includes('sqlite_data') && line.includes(region)
+    );
+    
+    if (sqliteVolumeExists) {
+      consola.info(`SQLite volume 'sqlite_data' already exists in region ${region}`);
+      return;
+    }
+    
+    // Create the volume if it doesn't exist
     const volumeArgs = ['sqlite_data', '--region', region, '--size', size];
     await executeFlyctl('volumes', ['create', ...volumeArgs], config);
     consola.success(`SQLite volume created successfully in ${region}`);
   } catch (error) {
-    // Don't fail the entire launch if volume creation fails
-    consola.warn(`Failed to create SQLite volume: ${error.message}`);
-    consola.info('You can create the volume manually later with:');
-    consola.info(`  flyctl volumes create sqlite_data --region ${region} --size ${size}`);
+    // Fail the entire launch if volume creation fails
+    throw new NuxflyError(`Failed to create SQLite volume: ${error.message}`, {
+      suggestion: `You can create the volume manually later with: flyctl volumes create sqlite_data --region ${region} --size ${size}`,
+      cause: error,
+    });
   }
 }
 
@@ -140,14 +171,15 @@ async function createSqliteVolume(region, size, config) {
  */
 function displayNextSteps(appName) {
   consola.box({
-    title: '🎉 App launched successfully!',
-    message: `Your app "${appName}" has been configured for Fly.io deployment.
+    title: '🎉 App created successfully!',
+    message: `Your app "${appName}" has been created on Fly.io but is not yet deployed.
 
 Next steps:
-  1. Configure your app: Edit your nuxt.config.js nuxfly section
-  2. Generate deployment files: nuxfly generate
-  3. Set environment variables: nuxfly secrets set KEY=value
-  4. Deploy your app: nuxfly deploy
+  1. Configure your app: Edit your nuxt.config.js nuxfly section to configure which buckets should be created
+  2. Create your storage buckets: nuxfly buckets create
+  3. Generate deployment files: nuxfly generate
+  4. Inspect everything and set additional environment variables (optional): nuxfly secrets set KEY=value
+  5. Deploy your app: nuxfly deploy
 
 Your fly.toml is saved in .nuxfly/fly.toml for version control.`,
     style: {
