@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const storage = usePublicStorage()
-  const key = `/images/${randomUUID()}`
+  const key = `images/${randomUUID()}`
   const metadata = {
     'Content-Type': file[0].type,
   }

@@ -4,7 +4,7 @@ export default defineEventHandler(async () => {
   const storage = usePublicStorage()
   const items = []
   try {
-    const objects = storage.minioClient.listObjectsV2(storage.bucket, '/images/', false)
+    const objects = storage.minioClient.listObjectsV2(storage.bucket, 'images/', false)
     for await (const item of objects) {
       console.log('Found image:', item)
       items.push(item.name)
