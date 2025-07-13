@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col items-center justify-center gap-4 min-h-screen">
-    <h1 class="text-2xl font-bold">Fly Region: {{ region }}</h1>
     <UCard class="w-full max-w-md">
       <template #header>
         <h1 class="font-bold text-xl text-center">Todo List</h1>
@@ -38,7 +37,6 @@
 
 
 <script setup lang="ts">
-const region = ref(useFlyProxy().region || 'Unknown');
 
 const { data: todos, refresh } = useAsyncData("todos", () =>
   $fetch("/api/todos")

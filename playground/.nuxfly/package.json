@@ -2,6 +2,7 @@
   "name": "nuxfly-migration",
   "version": "1.0.0",
   "dependencies": {
+    "@libsql/client": "^0.15.9",
     "drizzle-kit": "^0.31.3",
     "drizzle-orm": "^0.44.2"
   }

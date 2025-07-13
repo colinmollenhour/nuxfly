@@ -41,7 +41,7 @@ export const copyDistDir = withErrorHandling(async (config) => {
     }
     
     // Copy directory recursively
-    await cp(distPath, targetDistPath, { recursive: true });
+    await cp(distPath, targetDistPath, { recursive: true, verbatimSymlinks: true });
     consola.success('Copied .output directory to .nuxfly/.output');
     return true;
   } catch (error) {
