@@ -1,6 +1,5 @@
 import consola from 'consola';
 import { executeFlyctlWithOutputInDir, executeFlyctlWithOutput, executeFlyctl } from './flyctl.mjs';
-import { loadConfig } from './config.mjs';
 
 /**
  * Get organization name from flyctl status
@@ -38,15 +37,15 @@ export function parseStorageCreateOutput(output) {
     
     for (const line of lines) {
       if (line.includes('AWS_ACCESS_KEY_ID:')) {
-        credentials.accessKeyId = line.split(':', 2)[1].trim();
+        credentials.accessKeyId = line.split(':').slice(1).join(':').trim();
       } else if (line.includes('AWS_SECRET_ACCESS_KEY:')) {
-        credentials.secretAccessKey = line.split(':', 2)[1].trim();
+        credentials.secretAccessKey = line.split(':').slice(1).join(':').trim();
       } else if (line.includes('AWS_ENDPOINT_URL_S3:')) {
-        credentials.endpointUrl = line.split(':', 2)[1].trim();
+        credentials.endpointUrl = line.split(':').slice(1).join(':').trim();
       } else if (line.includes('AWS_REGION:')) {
-        credentials.region = line.split(':', 2)[1].trim();
+        credentials.region = line.split(':').slice(1).join(':').trim();
       } else if (line.includes('BUCKET_NAME:')) {
-        credentials.bucketName = line.split(':', 2)[1].trim();
+        credentials.bucketName = line.split(':').slice(1).join(':').trim();
       }
     }
     
