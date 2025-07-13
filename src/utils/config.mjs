@@ -6,20 +6,6 @@ import { loadNuxtConfig } from '@nuxt/kit';
 import { parseFlyToml } from '../templates/fly-toml.mjs';
 
 /**
- * Default configuration values
- */
-const DEFAULT_CONFIG = {
-  app: null,
-  // region: 'ord',
-  // memory: '512mb',
-  // size: 'shared-cpu-1x',
-  // instances: {
-  //   min: 1,
-  //   max: 3,
-  // },
-};
-
-/**
  * Load and merge configuration from multiple sources
  */
 export async function loadConfig() {
@@ -38,13 +24,6 @@ export async function loadConfig() {
     env: process.env,
   })
 
-  // Extract nuxfly configuration
-  const nuxflyConfig = nuxtConfig?.nuxfly || {};
-  
-  // Merge with defaults
-  const config = mergeConfig(DEFAULT_CONFIG, nuxflyConfig?.flyApp || {});
-  config.nuxt = nuxtConfig;
-  
   // Read app name from fly.toml if it exists
   const flyTomlPath = join(cwd, 'fly.toml');
   const flyTomlExists = existsSync(flyTomlPath);
@@ -52,9 +31,17 @@ export async function loadConfig() {
   if (flyTomlExists) {
     const flyTomlContent = readFileSync(flyTomlPath, 'utf8');
     flyConfig = parseFlyToml(flyTomlContent);
-    config.app = flyConfig.app;
   }
-
+  const config = {
+    nuxt: nuxtConfig,
+    app: flyConfig.app,
+    region: flyConfig.region,
+    memory: flyConfig.memory,
+    cpu_kind: flyConfig.cpu_kind,
+    cpus: flyConfig.cpus,
+    env: flyConfig.env || {},
+    volumes: flyConfig.volumes || [],
+  }
   // Override with environment variables
   applyEnvironmentOverrides(config);
   
@@ -88,23 +75,6 @@ function isNuxtProject(cwd) {
 }
 
 /**
- * Deep merge configuration objects
- */
-function mergeConfig(defaults, userConfig) {
-  const result = { ...defaults };
-  
-  for (const [key, value] of Object.entries(userConfig)) {
-    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = mergeConfig(result[key] || {}, value);
-    } else {
-      result[key] = value;
-    }
-  }
-  
-  return result;
-}
-
-/**
  * Apply environment variable overrides
  */
 function applyEnvironmentOverrides(config) {
@@ -117,15 +87,6 @@ function applyEnvironmentOverrides(config) {
   // FLY_ACCESS_TOKEN is handled by flyctl directly
   if (process.env.FLY_ACCESS_TOKEN) {
     consola.debug('FLY_ACCESS_TOKEN found in environment');
-  }
-  
-  // Other environment overrides
-  if (process.env.FLY_REGION) {
-    config.region = process.env.FLY_REGION;
-  }
-  
-  if (process.env.FLY_MEMORY) {
-    config.memory = process.env.FLY_MEMORY;
   }
 }
 

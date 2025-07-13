@@ -5,8 +5,10 @@ import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
 import { ensureNuxflyDir, fileExists, writeFile } from '../utils/filesystem.mjs';
 import { validateLaunchCommand } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
-import { createS3Buckets } from '../utils/buckets.mjs';
+import { getExistingBuckets, getOrgName, createLitestreamBucket, createPrivateBucket, createPublicBucket } from '../utils/buckets.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
+import { generateFlyToml } from '../templates/fly-toml.mjs';
+import { loadConfig } from '../utils/config.mjs';
 
 /**
  * Launch command - runs fly launch and saves config to .nuxfly/fly.toml
@@ -43,7 +45,7 @@ export const launch = withErrorHandling(async (args, config) => {
     region: args.region,
     noDeploy: args['no-deploy'] !== false, // Default to true (no deploy)
     noObjectStorage: true, // Skip default bucket creation
-    extraArgs: [], // Will be populated with any additional args
+    extraArgs: ['--ha=false'], // Will be populated with any additional args
   };
   
   // Add any extra arguments passed after --
@@ -55,6 +57,7 @@ export const launch = withErrorHandling(async (args, config) => {
   }
   
   consola.debug('Launch options:', launchOptions);
+  let newConfig;
   
   try {
     // Run fly launch
@@ -65,6 +68,12 @@ export const launch = withErrorHandling(async (args, config) => {
     const rootFlyToml = join(process.cwd(), 'fly.toml');
     if (fileExists(rootFlyToml)) {
       consola.success(`fly.toml created at ${rootFlyToml}`);
+
+      // Write the updated fly.toml back to the root
+      newConfig = await loadConfig();
+      const newFlyTomlContent = generateFlyToml(newConfig);
+      await writeFile(rootFlyToml, newFlyTomlContent);
+      consola.success('Updated fly.toml with nuxfly configuration');
       
       // Overwrite .dockerignore file that was generated incorrectly by flyctl launch
       const dockerignoreContent = generateDockerignore();
@@ -78,7 +87,7 @@ export const launch = withErrorHandling(async (args, config) => {
       if (region) {
         const volumeSize = args.size || '1';
         try {
-          await createSqliteVolume(region, volumeSize, config);
+          await createSqliteVolume(region, volumeSize, newConfig);
         } catch (error) {
           throw new NuxflyError(`Failed to create SQLite volume: ${error.message}`, {
             suggestion: 'You can create the volume manually with: flyctl volumes create sqlite_data --region <region> --size <size>',
@@ -92,7 +101,48 @@ export const launch = withErrorHandling(async (args, config) => {
       
       // Create S3 buckets after successful launch
       try {
-        await createS3Buckets(config);
+        const existingBuckets = await getExistingBuckets(newConfig);
+        consola.info('🪣 Creating S3 buckets...');
+
+        // Get organization name for storage commands
+        const orgName = await getOrgName(newConfig);
+        if (!orgName) {
+          consola.warn('Could not determine organization name. Bucket creation may fail.');
+          consola.info('You can create buckets manually later during deployment.');
+          return;
+        }
+        consola.debug(`Using organization: ${orgName}`);
+        
+        // Load Nuxt config to detect bucket requirements
+        const nuxflyConfig = newConfig.nuxt?.nuxfly || {};
+
+        // Create litestream bucket
+        if (nuxflyConfig.litestream) {
+          if (!existingBuckets.includes(`${newConfig.app}-litestream`)) {
+            await createLitestreamBucket(orgName, newConfig);
+          } else {
+            consola.error('Litestream bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_LITESTREAM_S3_ secrets manually.');
+          }
+        }
+        
+        // Create public bucket if configured
+        if (nuxflyConfig.publicStorage) {
+          if (!existingBuckets.includes(`${newConfig.app}-public`)) {
+            await createPublicBucket(orgName, newConfig);
+          } else {
+            consola.error('Public bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_PUBLIC_BUCKET_S3_ secrets manually.');
+          }
+        }
+        
+        // Create private bucket if configured
+        if (nuxflyConfig.privateStorage) {
+          if (!existingBuckets.includes(`${newConfig.app}-private`)) {
+            await createPrivateBucket(orgName, newConfig);
+          } else {
+            consola.error('Private bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_PRIVATE_BUCKET_S3_ secrets manually.');
+          }
+        }
+
       } catch (error) {
         throw new NuxflyError(`Failed to create S3 buckets: ${error.message}`, {
           suggestion: 'You can create buckets manually later with: nuxfly buckets create',
@@ -104,7 +154,7 @@ export const launch = withErrorHandling(async (args, config) => {
     }
     
     // Display next steps
-    displayNextSteps(args.name || 'your-app');
+    displayNextSteps(newConfig || config);
     
   } catch (error) {
     if (error.exitCode === 130) {
@@ -180,10 +230,10 @@ async function createSqliteVolume(region, size, config) {
 /**
  * Display helpful next steps after successful launch
  */
-function displayNextSteps(appName) {
+function displayNextSteps(config) {
   consola.box({
     title: '🎉 App created successfully!',
-    message: `Your app "${appName}" has been created on Fly.io but is not yet deployed.
+    message: `Your app "${config.app}" has been created on Fly.io but is not yet deployed.
 
 Next steps:
   1. Edit your nuxt.config.js nuxfly section to configure additional buckets if needed

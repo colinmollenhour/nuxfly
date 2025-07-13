@@ -1,11 +1,14 @@
 /**
  * Generate fly.toml content from nuxfly configuration
  */
+
 export function generateFlyToml(config = {}) {
   const {
     app,
-    region = 'ord',
-    memory = '512mb',
+    region,
+    memory,
+    cpu_kind,
+    cpus,
     instances = { min: 1 },
     env = {},
     volumes = [],
@@ -13,6 +16,15 @@ export function generateFlyToml(config = {}) {
     statics = [],
   } = config;
 
+  // Add default nuxfly configuration
+  volumes.push({ name: 'sqlite_data', mount: '/data' })
+  build.dockerfile = '.nuxfly/Dockerfile'
+  statics.push(...[
+    { guest_path: '/app/public/_fonts', url_prefix: '/_fonts' },
+    { guest_path: '/app/public/_nuxt', url_prefix: '/_nuxt' },
+    { guest_path: '/app/public/favicon.ico', url_prefix: '/favicon.ico' },
+  ])
+  
   let toml = '';
 
   // Header comment
@@ -61,8 +73,8 @@ export function generateFlyToml(config = {}) {
   // VM configuration
   toml += '[[vm]]\n';
   toml += `  memory = "${memory}"\n`;
-  toml += `  cpu_kind = "shared"\n`;
-  toml += `  cpus = 1\n\n`;
+  toml += `  cpu_kind = "${cpu_kind}"\n`;
+  toml += `  cpus = ${cpus}\n\n`;
 
   // HTTP service health checks
   toml += '#  [services.http_checks]\n';
@@ -93,8 +105,8 @@ export function generateFlyToml(config = {}) {
   if (statics.length > 0) {
     for (const static_ of statics) {
       toml += `[[statics]]\n`;
-      toml += `  guest_path = "${static_.guestPath}"\n`;
-      toml += `  url_prefix = "${static_.urlPrefix}"\n\n`;
+      toml += `  guest_path = "${static_.guest_path}"\n`;
+      toml += `  url_prefix = "${static_.url_prefix}"\n\n`;
     }
   }
 
@@ -110,7 +122,8 @@ export function parseFlyToml(content) {
     app: null,
     region: 'ord',
     memory: '512mb',
-    instances: { min: 1 },
+    cpu_kind: 'shared',
+    cpus: 1,
     env: {},
     volumes: [],
   };

@@ -2,7 +2,7 @@ import consola from 'consola';
 import { flyDeploy, checkAppAccess } from '../utils/flyctl.mjs';
 import { validateDeploymentConfig } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
-import { loadConfig, getAppName, hasDistDir } from '../utils/config.mjs';
+import { hasDistDir } from '../utils/config.mjs';
 import { getOrgName, createLitestreamBucket, createPublicBucket, createPrivateBucket, getExistingBuckets } from '../utils/buckets.mjs';
 import { buildApplication } from '../utils/build.mjs';
 
@@ -13,7 +13,7 @@ async function ensureBucketsExist(config) {
   consola.info('🪣 Checking S3 buckets...');
   
   // Get app name from fly.toml or config
-  const appName = getAppName(config);
+  const appName = config.app;
   
   try {
     // Validate app exists and user has access
@@ -31,8 +31,7 @@ async function ensureBucketsExist(config) {
     }
     
     // Load Nuxt config to detect bucket requirements
-    const nuxtConfig = (await loadConfig()).nuxt;
-    const nuxflyConfig = nuxtConfig?.nuxfly || {};
+    const nuxflyConfig = config.nuxt?.nuxfly || {};
     
     // Check which buckets are configured
     const needsPublicBucket = !!nuxflyConfig.publicStorage;
@@ -45,7 +44,7 @@ async function ensureBucketsExist(config) {
     }
     
     // Check existing buckets to avoid duplicates
-    const existingBuckets = await getExistingBuckets(appName, config);
+    const existingBuckets = await getExistingBuckets(config);
     
     let bucketsCreated = 0;
     
@@ -56,7 +55,7 @@ async function ensureBucketsExist(config) {
         consola.debug(`Litestream bucket already exists: ${litestreamBucketName}`);
       } else {
         consola.info(`Creating missing litestream bucket: ${litestreamBucketName}`);
-        await createLitestreamBucket(appName, orgName, config);
+        await createLitestreamBucket(orgName, config);
         bucketsCreated++;
       }
     }
@@ -68,7 +67,7 @@ async function ensureBucketsExist(config) {
         consola.debug(`Public bucket already exists: ${publicBucketName}`);
       } else {
         consola.info(`Creating missing public bucket: ${publicBucketName}`);
-        await createPublicBucket(appName, orgName, config);
+        await createPublicBucket(orgName, config);
         bucketsCreated++;
       }
     }
@@ -80,7 +79,7 @@ async function ensureBucketsExist(config) {
         consola.debug(`Private bucket already exists: ${privateBucketName}`);
       } else {
         consola.info(`Creating missing private bucket: ${privateBucketName}`);
-        await createPrivateBucket(appName, orgName, config);
+        await createPrivateBucket(orgName, config);
         bucketsCreated++;
       }
     }
@@ -124,7 +123,7 @@ export const deploy = withErrorHandling(async (args, config) => {
     const deployOptions = {
       strategy: args.strategy,
       cwd: process.cwd(), // Deploy from project root instead of .nuxfly
-      extraArgs: [], // Will be populated with any additional args
+      extraArgs: ['--ha=false'], // Will be populated with any additional args
     };
     
     // Add any extra arguments passed after --

@@ -7,7 +7,7 @@ import { loadConfig } from './config.mjs';
  */
 export async function getOrgName(config) {
   try {
-    const result = await executeFlyctlWithOutput('status', config);
+    const result = await executeFlyctlWithOutput('status', [], config);
     
     // Parse the output to extract organization name
     const lines = result.stdout.split('\n');
@@ -38,15 +38,15 @@ export function parseStorageCreateOutput(output) {
     
     for (const line of lines) {
       if (line.includes('AWS_ACCESS_KEY_ID:')) {
-        credentials.accessKeyId = line.split(':')[1].trim();
+        credentials.accessKeyId = line.split(':', 2)[1].trim();
       } else if (line.includes('AWS_SECRET_ACCESS_KEY:')) {
-        credentials.secretAccessKey = line.split(':')[1].trim();
+        credentials.secretAccessKey = line.split(':', 2)[1].trim();
       } else if (line.includes('AWS_ENDPOINT_URL_S3:')) {
-        credentials.endpointUrl = line.split(':')[1].trim();
+        credentials.endpointUrl = line.split(':', 2)[1].trim();
       } else if (line.includes('AWS_REGION:')) {
-        credentials.region = line.split(':')[1].trim();
+        credentials.region = line.split(':', 2)[1].trim();
       } else if (line.includes('BUCKET_NAME:')) {
-        credentials.bucketName = line.split(':')[1].trim();
+        credentials.bucketName = line.split(':', 2)[1].trim();
       }
     }
     
@@ -188,41 +188,12 @@ export async function createPrivateBucket(orgName, config) {
  * Create S3 buckets based on configuration
  */
 export async function createS3Buckets(config) {
-  consola.info('🪣 Creating S3 buckets...');
-  
-  // Get organization name for storage commands
-  const orgName = await getOrgName(config);
-  if (!orgName) {
-    consola.warn('Could not determine organization name. Bucket creation may fail.');
-    consola.info('You can create buckets manually later during deployment.');
-    return;
-  }
-  consola.debug(`Using organization: ${orgName}`);
-  
-  // Load Nuxt config to detect bucket requirements
-  const nuxtConfig = await loadConfig();
-  const nuxflyConfig = nuxtConfig?.nuxfly || {};
-  
-  // Create litestream bucket
-  if (nuxflyConfig.litestream) {
-    await createLitestreamBucket(orgName, config);
-  }
-  
-  // Create public bucket if configured
-  if (nuxflyConfig.publicBucket) {
-    await createPublicBucket(orgName, config);
-  }
-  
-  // Create private bucket if configured
-  if (nuxflyConfig.privateBucket) {
-    await createPrivateBucket(orgName, config);
-  }
 }
 
 /**
  * Get list of existing storage buckets for the app
  */
-export async function getExistingBuckets(appName, config) {
+export async function getExistingBuckets(config) {
   try {
     consola.debug('Checking existing storage buckets...');
     const result = await executeFlyctlWithOutput('storage', ['list'], config);
@@ -234,7 +205,7 @@ export async function getExistingBuckets(appName, config) {
     for (const line of lines) {
       // Look for lines that contain bucket names (typically in a table format)
       // This is a simple parser - may need adjustment based on actual flyctl output format
-      if (line.includes(appName) && (line.includes('-public') || line.includes('-private') || line.includes('-litestream'))) {
+      if (line.includes(config.app) && (line.includes('-public') || line.includes('-private') || line.includes('-litestream'))) {
         const match = line.match(/(\S+(?:-public|-private|-litestream))/);
         if (match) {
           buckets.push(match[1]);

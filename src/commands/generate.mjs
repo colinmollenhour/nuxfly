@@ -37,21 +37,7 @@ export const generate = withErrorHandling(async (args, config) => {
   try {
     // Generate fly.toml in project root
     consola.info(`Step ${step++}: Generating fly.toml...`);
-    const flyTomlContent = generateFlyToml({
-      app: config.app,
-      region: config.region || 'ord',
-      memory: config.memory || '512mb',
-      instances: config.instances || { min: 1 },
-      env: config.env || {},
-      volumes: config.volumes || [],
-      build: { dockerfile: '.nuxfly/Dockerfile' },
-      statics: [
-        // Default static paths for Nuxt applications
-        { guest_path: '/app/public/_fonts', url_prefix: '/_fonts' },
-        { guest_path: '/app/public/_nuxt', url_prefix: '/_nuxt' },
-        { guest_path: '/app/public/favicon.ico', url_prefix: '/favicon.ico' },
-      ],
-    });
+    const flyTomlContent = generateFlyToml(config);
     await writeFile(join(process.cwd(), 'fly.toml'), flyTomlContent);
     
     // Generate Dockerfile
