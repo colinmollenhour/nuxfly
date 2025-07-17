@@ -1,8 +1,21 @@
 {
   "name": "nuxfly",
   "version": "1.0.0",
+  "keywords": [
+    "nuxt",
+    "cli",
+    "fly.io",
+    "nuxthub"
+  ],
+  "author": "Colin Mollenhour",
   "description": "",
+  "repo": "colinmollenhour/nuxfly",
   "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
   "bin": {
     "nuxfly": "./src/index.mjs"
   },
@@ -10,12 +23,11 @@
     "lint": "eslint . --fix",
     "nuxfly": "./src/index.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@nuxt/module-builder": "^1.0.1",
     "eslint": "^9.31.0",
     "globals": "^16.3.0"
   },
@@ -25,7 +37,17 @@
     "c12": "^3.0.4",
     "citty": "^0.1.6",
     "consola": "^3.4.2",
+    "defu": "^6.1.4",
     "execa": "^9.6.0",
     "minio": "^8.0.5"
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore(release): release v${version}"
+    },
+    "github": {
+      "release": true,
+      "releaseName": "v${version}"
+    }
   }
 }

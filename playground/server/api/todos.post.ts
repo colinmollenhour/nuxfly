@@ -1,5 +1,5 @@
-import { todo } from "../db/schema";
-import { useDrizzle } from "../utils/drizzle";
+import { todo } from "@@/server/db/schema";
+import { useDrizzle } from "@@/server/utils/drizzle";
 
 export default defineEventHandler(async (event) => {
   const { title } = await readBody(event);

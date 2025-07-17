@@ -1,6 +1,6 @@
 import useSqliteDatabase from '../../../src/runtime/composables/useSqliteDatabase'
 import { drizzle } from 'drizzle-orm/libsql'
-import * as schema from '../db/schema'
+import * as schema from '@@/server/db/schema'
 
 export const tables = schema
 const db = drizzle(useSqliteDatabase().db, { schema })
