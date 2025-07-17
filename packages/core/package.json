@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "build": "nuxt-module-build",
-    "dev": "nuxt-module-build --stub"
+    "dev": "nuxt-module-build --stub",
+    "release": "release-it"
   },
   "license": "MIT",
   "dependencies": {

@@ -19,7 +19,8 @@
   "scripts": {
     "build": "node build.mjs",
     "dev": "node build.mjs --watch",
-    "nuxfly": "./src/index.mjs"
+    "nuxfly": "./src/index.mjs",
+    "release": "release-it"
   },
   "license": "MIT",
   "dependencies": {

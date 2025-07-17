@@ -33,19 +33,43 @@ cd packages/core && pnpm build
 
 ## Publishing
 
-### Build and Publish Core Module First
+This project uses [release-it](https://github.com/release-it/release-it) for automated releases and GitHub releases.
+
+### Release Individual Packages
+
+#### Release Core Module
+```bash
+pnpm release:core
+```
+
+#### Release CLI
+```bash
+pnpm release:cli
+```
+
+### Manual Publishing (Alternative)
+
+#### Build and Publish Core Module First
 ```bash
 cd packages/core
 pnpm build
 npm publish
 ```
 
-### Build and Publish CLI
+#### Build and Publish CLI
 ```bash
 cd packages/cli
 pnpm build
 npm publish
 ```
+
+### Release Process
+
+1. **Core Module**: Always release `@nuxfly/core` first since the CLI depends on it
+2. **CLI**: Release `@nuxfly/cli` after the core module is published
+3. **GitHub Releases**: Each package creates separate GitHub releases with tags:
+   - Core: `core-v1.0.0`
+   - CLI: `cli-v1.0.0`
 
 ## Project Structure
 

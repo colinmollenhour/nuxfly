@@ -7,14 +7,18 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r dev",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "release": "release-it",
+    "release:cli": "cd packages/cli && release-it",
+    "release:core": "cd packages/core && release-it"
   },
   "packageManager": "pnpm@10.12.1",
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "@nuxt/module-builder": "^1.0.1",
     "eslint": "^9.31.0",
-    "globals": "^16.3.0"
+    "globals": "^16.3.0",
+    "release-it": "^19.0.4"
   },
   "license": "MIT",
   "author": "Colin Mollenhour"
