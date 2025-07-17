@@ -12,7 +12,7 @@
     "preRelease": false
   },
   "npm": {
-    "publish": true
+    "publish": false
   },
   "hooks": {
     "before:init": "pnpm build"

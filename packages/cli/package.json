@@ -24,7 +24,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@nuxfly/core": "workspace:*",
     "c12": "^3.0.4",
     "citty": "^0.1.6",
     "consola": "^3.4.2",
