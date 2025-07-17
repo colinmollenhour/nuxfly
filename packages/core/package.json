@@ -1,0 +1,29 @@
+{
+  "name": "@nuxfly/core",
+  "version": "1.0.0",
+  "keywords": [
+    "nuxt",
+    "module",
+    "fly.io",
+    "nuxthub"
+  ],
+  "author": "Colin Mollenhour",
+  "description": "Nuxt module for Fly.io integration with storage and database support",
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "types": "./dist/types.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "nuxt-module-build",
+    "dev": "nuxt-module-build --stub"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@libsql/client": "^0.15.9",
+    "@nuxt/kit": "^3.17.6",
+    "defu": "^6.1.4",
+    "minio": "^8.0.5"
+  }
+}

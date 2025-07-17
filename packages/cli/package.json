@@ -1,0 +1,32 @@
+{
+  "name": "@nuxfly/cli",
+  "version": "1.0.0",
+  "keywords": [
+    "nuxt",
+    "cli",
+    "fly.io",
+    "nuxthub"
+  ],
+  "author": "Colin Mollenhour",
+  "description": "CLI tool for deploying Nuxt applications to Fly.io",
+  "type": "module",
+  "bin": {
+    "nuxfly": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "nuxfly": "./src/index.mjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@nuxfly/core": "workspace:*",
+    "c12": "^3.0.4",
+    "citty": "^0.1.6",
+    "consola": "^3.4.2",
+    "execa": "^9.6.0"
+  }
+}
