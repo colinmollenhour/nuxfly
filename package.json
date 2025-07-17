@@ -22,5 +22,6 @@
     "release-it-pnpm": "^4.6.6"
   },
   "license": "MIT",
-  "author": "Colin Mollenhour"
+  "author": "Colin Mollenhour",
+  "version": "1.0.0"
 }
