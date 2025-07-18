@@ -4,3 +4,4 @@ node_modules
 !README.md
 .settings.local.json
 dist
+docs/.docs
