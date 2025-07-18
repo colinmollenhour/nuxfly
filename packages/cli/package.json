@@ -9,6 +9,7 @@
   ],
   "author": "Colin Mollenhour",
   "description": "CLI tool for deploying Nuxt applications to Fly.io",
+  "homepage": "https://nuxfly.pages.dev/cli",
   "type": "module",
   "bin": {
     "nuxfly": "./src/index.mjs"

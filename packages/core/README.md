@@ -2,6 +2,9 @@
 
 A Nuxt module that provides seamless integration with Fly.io infrastructure, including SQLite databases and S3 storage.
 
+> [!WARNING]
+> This project is in early development and may not be fully functional yet.
+
 ## Features
 
 - 🗄️ **SQLite Database** - libSQL integration with automatic connection management

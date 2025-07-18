@@ -2,6 +2,9 @@
 
 This monorepo contains the Nuxfly CLI and Nuxt module for deploying Nuxt applications to Fly.io.
 
+> [!WARNING]
+> This project is in early development and may not be fully functional yet.
+
 ## Packages
 
 ### [@nuxfly/cli](./packages/cli)

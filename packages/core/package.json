@@ -9,6 +9,7 @@
   ],
   "author": "Colin Mollenhour",
   "description": "Nuxt module for Fly.io integration with storage and database support",
+  "homepage": "https://nuxfly.pages.dev/module",
   "type": "module",
   "main": "./dist/module.mjs",
   "types": "./dist/types.d.mts",

@@ -2,6 +2,9 @@
 
 A powerful CLI tool for deploying Nuxt applications to Fly.io with integrated SQLite and S3 storage support.
 
+> [!WARNING]
+> This project is in early development and may not be fully functional yet.
+
 ## Features
 
 - 🚀 **One-command deployment** - Deploy Nuxt apps to Fly.io with automatic infrastructure setup
