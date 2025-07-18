@@ -11,14 +11,14 @@
   "description": "CLI tool for deploying Nuxt applications to Fly.io",
   "type": "module",
   "bin": {
-    "nuxfly": "./dist/index.mjs"
+    "nuxfly": "./src/index.mjs"
   },
   "files": [
-    "dist"
+    "src"
   ],
   "scripts": {
-    "build": "node build.mjs",
-    "dev": "node build.mjs --watch",
+    "build": "echo 'Nothing to do...'",
+    "dev": "echo 'Nothing to do...'",
     "nuxfly": "./src/index.mjs",
     "release": "release-it"
   },

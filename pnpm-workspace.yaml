@@ -1,2 +1,5 @@
 packages:
   - 'packages/*'
+  - 'playground'
+  - 'docs-app'
+linkWorkspacePackages: true
