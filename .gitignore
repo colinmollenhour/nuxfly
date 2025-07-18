@@ -3,5 +3,7 @@ node_modules
 *.md
 !README.md
 .settings.local.json
+.output
 dist
-docs/.docs
+.nuxt
+docs/.docs/.data

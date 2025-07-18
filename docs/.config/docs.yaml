@@ -1,10 +1,10 @@
 # yaml-language-server: $schema=https://unpkg.com/undocs/schema/config.json
 
-name: 'packageName'
+name: 'NuxFly'
 shortDescription: ''
 description: ''
-github: 'unjs/packageName'
-# url: 'https://packageName.unjs.io'
+github: 'colinmollenhour/nuxfly'
+url: 'https://nuxfly.pages.dev'
 # redirects:
 #   "/from": "/to"
 # automd: true
@@ -12,7 +12,7 @@ landing:
   heroLinks:
     stackblitz:
       icon: 'i-heroicons-play'
-      to: 'https://stackblitz.com/github/unjs/packageName/tree/main/playground'
+      to: 'https://stackblitz.com/github/colinmollenhour/nuxfly/tree/main/playground'
   # contributors: true
   # features:
   #   - title:
