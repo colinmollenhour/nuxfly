@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=https://unpkg.com/undocs/schema/config.json
 
 name: 'NuxFly'
-shortDescription: ''
-description: ''
+shortDescription: 'Deploy Nuxt to Fly.io with SQLite and Tigris storage'
+description: 'Nuxt module and CLI tool for deploying Nuxt applications to Fly.io with integrated storage and database support.'
 github: 'colinmollenhour/nuxfly'
 url: 'https://nuxfly.pages.dev'
 # redirects:

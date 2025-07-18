@@ -38,10 +38,10 @@ jobs:
         with:
           node-version: "22"
       - name: Install dependencies
-        run: pnpm install --ignore-workspace
+        run: yarn
         working-directory: ./docs
       - name: Static HTML export with Nuxt
-        run: pnpm run build
+        run: yarn build
         working-directory: ./docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

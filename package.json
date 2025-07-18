@@ -12,7 +12,6 @@
     "release:cli": "cd packages/cli && release-it",
     "release:core": "cd packages/core && release-it"
   },
-  "packageManager": "pnpm@10.12.1",
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "@nuxt/module-builder": "^1.0.1",
