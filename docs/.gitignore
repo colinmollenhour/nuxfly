@@ -1,4 +1,4 @@
 node_modules
 .nuxt
-.output
 dist
+.docs/.data
