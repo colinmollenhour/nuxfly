@@ -21,6 +21,9 @@
     "release": "release-it"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@libsql/client": "^0.15.9",
     "@nuxt/kit": "^3.17.6",

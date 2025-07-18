@@ -33,21 +33,27 @@ cd packages/core && pnpm build
 
 ## Publishing
 
-This project uses [release-it](https://github.com/release-it/release-it) for automated releases and GitHub releases.
+### GitHub Releases
 
-### Release Individual Packages
+Both packages have been released to GitHub with the following tags:
+- **@nuxfly/core**: `core-v1.0.0`
+- **@nuxfly/cli**: `cli-v1.0.0`
 
-#### Release Core Module
-```bash
-pnpm release:core
-```
+### Manual Release Process
 
-#### Release CLI
-```bash
-pnpm release:cli
-```
+To create new releases:
 
-### Manual Publishing (Alternative)
+1. **Build packages**: `pnpm build`
+2. **Create tags**:
+   ```bash
+   git tag core-v1.0.1 -m "@nuxfly/core v1.0.1"
+   git tag cli-v1.0.1 -m "@nuxfly/cli v1.0.1"
+   ```
+3. **Push tags**: `git push origin core-v1.0.1 cli-v1.0.1`
+
+### NPM Publishing (Optional)
+
+If you want to publish to npm:
 
 #### Build and Publish Core Module First
 ```bash
@@ -63,13 +69,9 @@ pnpm build
 npm publish
 ```
 
-### Release Process
+### Release-it Configuration
 
-1. **Core Module**: Always release `@nuxfly/core` first since the CLI depends on it
-2. **CLI**: Release `@nuxfly/cli` after the core module is published
-3. **GitHub Releases**: Each package creates separate GitHub releases with tags:
-   - Core: `core-v1.0.0`
-   - CLI: `cli-v1.0.0`
+The project includes release-it configurations for automated releases, but they're currently set to skip npm publishing. You can modify the `.release-it.json` files to enable npm publishing when ready.
 
 ## Project Structure
 
