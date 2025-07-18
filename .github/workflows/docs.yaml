@@ -43,6 +43,8 @@ jobs:
       - name: Static HTML export with Nuxt
         run: yarn build
         working-directory: ./docs
+        env:
+          NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
