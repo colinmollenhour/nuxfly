@@ -5,7 +5,7 @@
     "dev": "undocs dev",
     "build": "undocs build"
   },
-  "devDependencies": {
+  "dependencies": {
     "undocs": "latest"
   }
 }
