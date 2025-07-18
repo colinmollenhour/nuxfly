@@ -5,6 +5,7 @@ shortDescription: 'Deploy Nuxt to Fly.io with SQLite and Tigris storage'
 description: 'Nuxt module and CLI tool for deploying Nuxt applications to Fly.io with integrated storage and database support.'
 github: 'colinmollenhour/nuxfly'
 url: 'https://nuxfly.pages.dev/'
+themeColor: "purple"
 # redirects:
 #   "/from": "/to"
 # automd: true
@@ -14,6 +15,22 @@ landing:
       icon: 'i-heroicons-play'
       to: 'https://stackblitz.com/github/colinmollenhour/nuxfly/tree/main/playground'
   # contributors: true
-  # features:
-  #   - title:
-  #     description:
+  features:
+    - title: 'One-Command Deployment'
+      description: 'Deploy your Nuxt app to Fly.io with a single command. Automatically generates Dockerfile, fly.toml, and handles build optimization.'
+      icon: 'i-heroicons-rocket-launch'
+    - title: 'SQLite Database Integration'
+      description: 'Built-in libSQL database support with automatic connection management and Drizzle Studio integration for database administration.'
+      icon: 'i-heroicons-circle-stack'
+    - title: 'S3-Compatible Storage'
+      description: 'Public and private file storage with Tigris S3 buckets. Automatic bucket creation and pre-signed URL generation for secure access.'
+      icon: 'i-heroicons-cloud-arrow-up'
+    - title: 'Fly.io Platform Integration'
+      description: 'Access Fly.io proxy headers, region information, and platform utilities. Built-in composables for server-side integration.'
+      icon: 'i-heroicons-globe-alt'
+    - title: 'Development Tools'
+      description: 'Local development proxy, database studio access, and comprehensive CLI commands for managing your deployed applications.'
+      icon: 'i-heroicons-wrench-screwdriver'
+    - title: 'TypeScript Ready'
+      description: 'Full TypeScript support with auto-completion and type safety for all composables and configuration options.'
+      icon: 'i-heroicons-code-bracket'
