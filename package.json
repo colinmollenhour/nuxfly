@@ -1,10 +1,6 @@
 {
   "name": "nuxfly-monorepo",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "playground"
-  ],
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r dev",

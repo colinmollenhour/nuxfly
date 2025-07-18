@@ -27,7 +27,7 @@ importers:
         specifier: ^4.6.6
         version: 4.6.6(magicast@0.3.5)(release-it@19.0.4(@types/node@24.0.14)(magicast@0.3.5))
 
-  docs-app:
+  docs:
     dependencies:
       undocs:
         specifier: ^0.3.10
