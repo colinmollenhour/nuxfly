@@ -45,6 +45,7 @@ jobs:
         working-directory: ./docs
         env:
           NUXT_UI_PRO_LICENSE: ${{ secrets.NUXT_UI_PRO_LICENSE }}
+          NUXT_APP_BASE_URL: https://colinmollenhour.github.io/nuxfly/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
