@@ -31,10 +31,13 @@ importers:
     dependencies:
       undocs:
         specifier: ^0.3.10
-        version: 0.3.10(@babel/parser@7.28.0)(@libsql/client@0.15.10)(@netlify/blobs@9.1.2)(@parcel/watcher@2.5.1)(@types/node@24.0.14)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0))(embla-carousel@8.6.0)(eslint@9.31.0(jiti@2.4.2))(ioredis@5.6.1)(jwt-decode@4.0.0)(lightningcss@1.30.1)(magicast@0.3.5)(rollup@4.45.1)(terser@5.43.1)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(xml2js@0.6.2)(yaml@2.8.0)(zod@3.25.76)
+        version: 0.3.10(@babel/parser@7.28.0)(@libsql/client@0.15.10)(@netlify/blobs@9.1.2)(@parcel/watcher@2.5.1)(@types/node@24.0.14)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0))(eslint@9.31.0(jiti@2.4.2))(ioredis@5.6.1)(lightningcss@1.30.1)(magicast@0.3.5)(rollup@4.45.1)(terser@5.43.1)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(xml2js@0.6.2)(yaml@2.8.0)(zod@3.25.76)
 
   packages/cli:
     dependencies:
+      '@nuxt/kit':
+        specifier: ^3.17.7
+        version: 3.17.7(magicast@0.3.5)
       c12:
         specifier: ^3.0.4
         version: 3.1.0(magicast@0.3.5)
@@ -5231,6 +5234,7 @@ packages:
 
   libsql@0.5.15:
     resolution: {integrity: sha512-N1ZhjpTadoxDW8UNssgJyZz+cAX/gi9OxOFHapH8AY6p7Qk/6umTC5UwQ+6bPnACDcxqbzhRlbLO+Mk60owFRA==}
+    cpu: [x64, arm64, wasm32, arm]
     os: [darwin, linux, win32]
 
   lightningcss-darwin-arm64@1.30.1:
@@ -9732,7 +9736,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@nuxt/ui-pro@3.2.0(@babel/parser@7.28.0)(@netlify/blobs@9.1.2)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(embla-carousel@8.6.0)(ioredis@5.6.1)(jwt-decode@4.0.0)(magicast@0.3.5)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(vue-router@4.5.1(vue@3.5.17(typescript@5.8.3)))(vue@3.5.17(typescript@5.8.3))(zod@3.25.76)':
+  '@nuxt/ui-pro@3.2.0(@babel/parser@7.28.0)(@netlify/blobs@9.1.2)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(ioredis@5.6.1)(magicast@0.3.5)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(vue-router@4.5.1(vue@3.5.17(typescript@5.8.3)))(vue@3.5.17(typescript@5.8.3))(zod@3.25.76)':
     dependencies:
       '@ai-sdk/vue': 1.2.12(vue@3.5.17(typescript@5.8.3))(zod@3.25.76)
       '@nuxt/kit': 3.17.7(magicast@0.3.5)
@@ -11225,7 +11229,7 @@ snapshots:
       glob: 10.4.5
       graceful-fs: 4.2.11
       node-gyp-build: 4.8.4
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       resolve-from: 5.0.0
     transitivePeerDependencies:
       - encoding
@@ -13080,6 +13084,10 @@ snapshots:
   fdir@6.4.6(picomatch@4.0.2):
     optionalDependencies:
       picomatch: 4.0.2
+
+  fdir@6.4.6(picomatch@4.0.3):
+    optionalDependencies:
+      picomatch: 4.0.3
 
   fecha@4.2.3: {}
 
@@ -15830,7 +15838,7 @@ snapshots:
   rollup-plugin-visualizer@6.0.3(rollup@4.45.1):
     dependencies:
       open: 8.4.2
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       source-map: 0.7.4
       yargs: 17.7.2
     optionalDependencies:
@@ -16321,8 +16329,8 @@ snapshots:
 
   tinyglobby@0.2.14:
     dependencies:
-      fdir: 6.4.6(picomatch@4.0.2)
-      picomatch: 4.0.2
+      fdir: 6.4.6(picomatch@4.0.3)
+      picomatch: 4.0.3
 
   tmp-promise@3.0.3:
     dependencies:
@@ -16437,14 +16445,14 @@ snapshots:
 
   undici@6.21.3: {}
 
-  undocs@0.3.10(@babel/parser@7.28.0)(@libsql/client@0.15.10)(@netlify/blobs@9.1.2)(@parcel/watcher@2.5.1)(@types/node@24.0.14)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0))(embla-carousel@8.6.0)(eslint@9.31.0(jiti@2.4.2))(ioredis@5.6.1)(jwt-decode@4.0.0)(lightningcss@1.30.1)(magicast@0.3.5)(rollup@4.45.1)(terser@5.43.1)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(xml2js@0.6.2)(yaml@2.8.0)(zod@3.25.76):
+  undocs@0.3.10(@babel/parser@7.28.0)(@libsql/client@0.15.10)(@netlify/blobs@9.1.2)(@parcel/watcher@2.5.1)(@types/node@24.0.14)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0))(eslint@9.31.0(jiti@2.4.2))(ioredis@5.6.1)(lightningcss@1.30.1)(magicast@0.3.5)(rollup@4.45.1)(terser@5.43.1)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(xml2js@0.6.2)(yaml@2.8.0)(zod@3.25.76):
     dependencies:
       '@headlessui/vue': 1.7.23(vue@3.5.17(typescript@5.8.3))
       '@iconify-json/logos': 1.2.4
       '@iconify-json/simple-icons': 1.2.43
       '@nuxt/content': https://pkg.pr.new/@nuxt/content@3390?c5a9c95(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0))(magicast@0.3.5)(typescript@5.8.3)
       '@nuxt/fonts': 0.11.4(@netlify/blobs@9.1.2)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(ioredis@5.6.1)(magicast@0.3.5)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))
-      '@nuxt/ui-pro': 3.2.0(@babel/parser@7.28.0)(@netlify/blobs@9.1.2)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(embla-carousel@8.6.0)(ioredis@5.6.1)(jwt-decode@4.0.0)(magicast@0.3.5)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(vue-router@4.5.1(vue@3.5.17(typescript@5.8.3)))(vue@3.5.17(typescript@5.8.3))(zod@3.25.76)
+      '@nuxt/ui-pro': 3.2.0(@babel/parser@7.28.0)(@netlify/blobs@9.1.2)(aws4fetch@1.0.20)(db0@0.3.2(@libsql/client@0.15.10)(better-sqlite3@11.10.0)(drizzle-orm@0.44.3(@libsql/client@0.15.10)(better-sqlite3@11.10.0)))(ioredis@5.6.1)(magicast@0.3.5)(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0))(vue-router@4.5.1(vue@3.5.17(typescript@5.8.3)))(vue@3.5.17(typescript@5.8.3))(zod@3.25.76)
       '@nuxtjs/plausible': 1.2.0(magicast@0.3.5)
       '@resvg/resvg-wasm': 2.6.2
       automd: 0.4.0(magicast@0.3.5)
@@ -16598,7 +16606,7 @@ snapshots:
       magic-string: 0.30.17
       mlly: 1.7.4
       pathe: 2.0.3
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       pkg-types: 2.2.0
       scule: 1.3.0
       strip-literal: 3.0.0
@@ -16615,7 +16623,7 @@ snapshots:
       magic-string: 0.30.17
       mlly: 1.7.4
       pathe: 2.0.3
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       pkg-types: 2.2.0
       scule: 1.3.0
       strip-literal: 3.0.0
@@ -16676,7 +16684,7 @@ snapshots:
   unplugin-utils@0.2.4:
     dependencies:
       pathe: 2.0.3
-      picomatch: 4.0.2
+      picomatch: 4.0.3
 
   unplugin-vue-components@28.8.0(@babel/parser@7.28.0)(@nuxt/kit@3.17.7(magicast@0.3.5))(vue@3.5.17(typescript@5.8.3)):
     dependencies:
@@ -16888,7 +16896,7 @@ snapshots:
       chokidar: 4.0.3
       npm-run-path: 6.0.0
       picocolors: 1.1.1
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       strip-ansi: 7.1.0
       tiny-invariant: 1.3.3
       tinyglobby: 0.2.14
@@ -16930,8 +16938,8 @@ snapshots:
   vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(yaml@2.8.0):
     dependencies:
       esbuild: 0.25.6
-      fdir: 6.4.6(picomatch@4.0.2)
-      picomatch: 4.0.2
+      fdir: 6.4.6(picomatch@4.0.3)
+      picomatch: 4.0.3
       postcss: 8.5.6
       rollup: 4.45.1
       tinyglobby: 0.2.14
