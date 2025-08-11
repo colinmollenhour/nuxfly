@@ -1,6 +1,6 @@
 {
   "name": "@nuxfly/cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "keywords": [
     "nuxt",
     "cli",
@@ -28,6 +28,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@nuxt/kit": "^3.17.7",
     "c12": "^3.0.4",
     "citty": "^0.1.6",
     "consola": "^3.4.2",
