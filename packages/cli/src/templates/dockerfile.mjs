@@ -17,7 +17,7 @@ RUN curl -L https://github.com/benbjohnson/litestream/releases/download/v0.3.13/
 COPY .nuxfly/package.json /app/dist/db/package.json
 COPY .nuxfly/package-lock.json /app/dist/db/package-lock.json
 COPY .nuxfly/drizzle.config.ts /app/dist/db/drizzle.config.ts
-COPY .nuxfly/drizzle /app/dist/db/drizzle
+COPY .nuxfly/migrations /app/dist/db/drizzle/migrations
 RUN cd /app/dist/db && npm install
 
 # Copy app files (assume already built)

@@ -71,3 +71,30 @@ function getInstallSuggestion(packageManager) {
       return 'npm should be available with Node.js installation';
   }
 }
+
+/**
+ * Install dependencies in the .nuxfly directory
+ */
+export async function installNuxflyDependencies(nuxflyDir) {
+  consola.info('📦 Installing dependencies in .nuxfly directory...');
+  
+  try {
+    consola.debug(`Running: npm install in ${nuxflyDir}`);
+    await execa('npm', ['install'], {
+      stdio: 'inherit',
+      cwd: nuxflyDir,
+    });
+    consola.success('✅ Dependencies installed successfully in .nuxfly directory!');
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw new NuxflyError('npm not found. Please install Node.js and npm.', {
+        suggestion: 'Install Node.js from https://nodejs.org/',
+      });
+    }
+    
+    throw new NuxflyError(`Failed to install dependencies in .nuxfly directory: ${error.message}`, {
+      suggestion: 'Check the npm install output above for details. Make sure the package.json in .nuxfly directory is valid.',
+      cause: error,
+    });
+  }
+}

@@ -1,9 +1,9 @@
 import { join } from 'path';
 import consola from 'consola';
-import { ensureNuxflyDir, writeFile, copyDistDir } from '../utils/filesystem.mjs';
+import { ensureNuxflyDir, writeFile, copyDistDir, copyDrizzleMigrations } from '../utils/filesystem.mjs';
 import { withErrorHandling } from '../utils/errors.mjs';
 import { hasDistDir, getEnvironmentSpecificFlyTomlPath } from '../utils/config.mjs';
-import { buildApplication } from '../utils/build.mjs';
+import { buildApplication, installNuxflyDependencies } from '../utils/build.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 import { generateFlyToml } from '../templates/fly-toml.mjs';
 import { generateDrizzleConfig, generateLitestreamConfig, generateStartScript, generateDrizzlePackageJson } from '../templates/database.mjs';
@@ -72,8 +72,11 @@ export const generate = withErrorHandling(async (args, config) => {
     const drizzlePackageJsonContent = await generateDrizzlePackageJson();
     await writeFile(join(nuxflyDir, 'package.json'), drizzlePackageJsonContent);
     
-    // Generate package-lock.json (empty for npm install to populate)
-    // await writeFile(join(nuxflyDir, 'package-lock.json'), '{}');
+    // Install dependencies to populate package-lock.json
+    await installNuxflyDependencies(nuxflyDir);
+    
+    // Copy drizzle migrations from parent project
+    await copyDrizzleMigrations(config);
     
     // Copy dist directory if it exists
     if (hasDistDir(config)) {

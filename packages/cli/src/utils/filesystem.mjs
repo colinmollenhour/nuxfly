@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, copyFileSync, statS
 import { join, dirname, relative } from 'path';
 import { cp } from 'fs/promises';
 import consola from 'consola';
+import { loadConfig } from 'c12';
 import { NuxflyError, PermissionError, withErrorHandling } from './errors.mjs';
 import { getNuxflyDir } from './config.mjs';
 
@@ -244,5 +245,78 @@ export const atomicWrite = withErrorHandling(async (filepath, content) => {
       }
     }
     throw error;
+  }
+});
+
+/**
+ * Load drizzle config and get migrations output directory
+ */
+export const getDrizzleMigrationsPath = withErrorHandling(async () => {
+  try {
+    consola.debug('Loading drizzle config...');
+    
+    // Try to load drizzle.config.ts first
+    const { config } = await loadConfig({
+      name: 'drizzle.config',
+      cwd: process.cwd(),
+      configFile: 'drizzle.config.ts',
+      defaults: {},
+    });
+    
+    consola.debug('Loaded drizzle config:', config);
+    
+    if (!config || !config.out) {
+      consola.debug('No drizzle config found or no "out" property specified');
+      return null;
+    }
+    
+    const migrationsPath = join(process.cwd(), config.out);
+    consola.debug(`Checking migrations path: ${migrationsPath}`);
+    
+    if (!directoryExists(migrationsPath)) {
+      consola.debug(`Migrations directory does not exist: ${migrationsPath}`);
+      return null;
+    }
+    
+    consola.debug(`Found drizzle migrations path: ${migrationsPath}`);
+    return migrationsPath;
+  } catch (error) {
+    consola.debug(`Failed to load drizzle config: ${error.message}`);
+    return null;
+  }
+});
+
+/**
+ * Copy drizzle migrations from parent project to .nuxfly directory
+ */
+export const copyDrizzleMigrations = withErrorHandling(async (config) => {
+  const migrationsPath = await getDrizzleMigrationsPath();
+  
+  if (!migrationsPath) {
+    consola.debug('No drizzle migrations found to copy');
+    return false;
+  }
+  
+  const nuxflyDir = getNuxflyDir(config);
+  const targetMigrationsPath = join(nuxflyDir, 'migrations');
+  
+  consola.info('📦 Copying drizzle migrations...');
+  consola.debug(`Copying migrations from ${migrationsPath} to ${targetMigrationsPath}`);
+  
+  try {
+    // Remove existing migrations directory if it exists
+    if (existsSync(targetMigrationsPath)) {
+      await removeDirectory(targetMigrationsPath);
+    }
+    
+    // Copy migrations directory recursively
+    await cp(migrationsPath, targetMigrationsPath, { recursive: true, verbatimSymlinks: true });
+    consola.success('✅ Copied drizzle migrations to .nuxfly/migrations');
+    return true;
+  } catch (error) {
+    if (error.code === 'EACCES') {
+      throw new PermissionError(migrationsPath);
+    }
+    throw new NuxflyError(`Failed to copy drizzle migrations: ${error.message}`);
   }
 });

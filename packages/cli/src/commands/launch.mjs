@@ -2,13 +2,14 @@ import { join, basename } from 'path';
 import { readFile } from 'fs/promises';
 import consola from 'consola';
 import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
-import { ensureNuxflyDir, fileExists, writeFile } from '../utils/filesystem.mjs';
+import { ensureNuxflyDir, fileExists, writeFile, copyDrizzleMigrations } from '../utils/filesystem.mjs';
 import { validateLaunchCommand } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { getExistingBuckets, getOrgName, createLitestreamBucket, createPrivateBucket, createPublicBucket } from '../utils/buckets.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 import { generateFlyToml } from '../templates/fly-toml.mjs';
 import { generateDrizzleConfig, generateLitestreamConfig, generateStartScript, generateDrizzlePackageJson } from '../templates/database.mjs';
+import { installNuxflyDependencies } from '../utils/build.mjs';
 import { loadConfig, getEnvironmentSpecificFlyTomlPath } from '../utils/config.mjs';
 
 /**
@@ -126,9 +127,11 @@ export const launch = withErrorHandling(async (args, config) => {
     await writeFile(join(nuxflyDir, 'package.json'), drizzlePackageJsonContent);
     consola.success('Generated package.json for drizzle-kit');
     
-    // Generate package-lock.json (empty for npm install to populate)
-    await writeFile(join(nuxflyDir, 'package-lock.json'), '{}');
-    consola.success('Generated package-lock.json');
+    // Install dependencies to populate package-lock.json
+    await installNuxflyDependencies(nuxflyDir);
+    
+    // Copy drizzle migrations from parent project
+    await copyDrizzleMigrations(newConfig);
 
     // Create SQLite volume after successful launch
     const region = args.region || await extractRegionFromFlyToml(envFlyToml) || 'ord';

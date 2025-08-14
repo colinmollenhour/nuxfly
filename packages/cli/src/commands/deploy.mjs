@@ -5,6 +5,7 @@ import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { hasDistDir } from '../utils/config.mjs';
 import { getOrgName, createLitestreamBucket, createPublicBucket, createPrivateBucket, getExistingBuckets } from '../utils/buckets.mjs';
 import { buildApplication } from '../utils/build.mjs';
+import { copyDrizzleMigrations } from '../utils/filesystem.mjs';
 
 /**
  * Check and create any missing S3 buckets based on current configuration
@@ -113,9 +114,14 @@ export const deploy = withErrorHandling(async (args, config) => {
   }
 
   try {
+    // Copy drizzle migrations from parent project when building
+    if (args.build) {
+      await copyDrizzleMigrations(config);
+    }
+
     // Build the application first (unless --no-build is specified) to ensure .output is up to date
     await buildApplication({ skipBuild: !args.build });
-
+    
     // Check and create any missing buckets before deployment
     await ensureBucketsExist(config);
     
