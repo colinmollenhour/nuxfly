@@ -32,7 +32,8 @@ export function buildFlyctlArgs(command, userArgs = [], config = {}) {
     args.push('--dockerignore-from-gitignore'); // Suppress option as we will overwrite it anyway
   }
   
-  // Add config flag if fly.toml exists in root (for non-launch commands)
+  // Add config flag if fly.toml exists in root
+  // Skip for storage commands and launch (since launch creates new configs)
   if (command !== 'storage' && command !== 'launch' && config._runtime?.flyTomlExists) {
     const flyTomlPath = getFlyTomlPath(config);
     args.push('--config', flyTomlPath);

@@ -2,7 +2,7 @@ import { accessSync, existsSync, constants } from 'fs';
 import consola from 'consola';
 import { FlyTomlNotFoundError, NotNuxtProjectError, NuxflyError, withErrorHandling } from './errors.mjs';
 import { checkAppAccess, checkFlyAuth } from './flyctl.mjs';
-import { getFlyTomlPath, getAppName } from './config.mjs';
+import { getFlyTomlPath, getAppName, validateNuxflyEnv } from './config.mjs';
 
 /**
  * Validate that fly.toml exists in project root
@@ -93,8 +93,9 @@ export const validateDeploymentConfig = withErrorHandling(async (config) => {
 export const validateCommand = withErrorHandling(async (command, config, args = {}) => {
   switch (command) {
     case 'launch':
-      // Launch can be run without existing fly.toml
+      // Launch can be run without existing fly.toml but needs NUXFLY_ENV
       validateNuxtProject();
+      validateNuxflyEnv(command);
       break;
       
     case 'import': {
@@ -108,25 +109,28 @@ export const validateCommand = withErrorHandling(async (command, config, args = 
     }
       
     case 'generate':
-      // Generate requires existing fly.toml
+      // Generate requires existing fly.toml and NUXFLY_ENV
       validateNuxtProject();
+      validateNuxflyEnv(command);
       validateFlyTomlExists(config);
       break;
       
     case 'deploy':
-      // Deploy requires full deployment config
+      // Deploy requires full deployment config and NUXFLY_ENV
       validateNuxtProject();
+      validateNuxflyEnv(command);
       await validateDeploymentConfig(config);
       break;
       
     case 'studio':
-      // Studio requires deployed app
+      // Studio requires deployed app and NUXFLY_ENV
       validateNuxtProject();
+      validateNuxflyEnv(command);
       await validateDeploymentConfig(config);
       break;
       
     default:
-      // Other commands (proxy) require fly.toml
+      // Other commands (proxy) require fly.toml but not NUXFLY_ENV
       validateFlyTomlExists(config);
       break;
   }

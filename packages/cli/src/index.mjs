@@ -55,7 +55,7 @@ const main = defineCommand({
     launch: defineCommand({
       meta: {
         name: 'launch',
-        description: 'Launch a new Fly app and save config to .nuxfly/fly.toml',
+        description: 'Launch a new Fly app and save config to environment-specific fly.toml',
       },
       args: {
         name: {
@@ -86,7 +86,7 @@ const main = defineCommand({
     import: defineCommand({
       meta: {
         name: 'import',
-        description: 'Import existing Fly app config to .nuxfly/fly.toml',
+        description: 'Import existing Fly app config to environment-specific fly.toml',
       },
       args: {
         app: {

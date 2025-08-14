@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readFile } from 'fs/promises';
+import { readFile, unlink } from 'fs/promises';
 import consola from 'consola';
 import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
 import { ensureNuxflyDir, fileExists, writeFile } from '../utils/filesystem.mjs';
@@ -8,10 +8,10 @@ import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { getExistingBuckets, getOrgName, createLitestreamBucket, createPrivateBucket, createPublicBucket } from '../utils/buckets.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 import { generateFlyToml } from '../templates/fly-toml.mjs';
-import { loadConfig } from '../utils/config.mjs';
+import { loadConfig, getEnvironmentSpecificFlyTomlPath } from '../utils/config.mjs';
 
 /**
- * Launch command - runs fly launch and saves config to .nuxfly/fly.toml
+ * Launch command - runs fly launch and saves config to environment-specific fly.toml
  */
 export const launch = withErrorHandling(async (args, config) => {
   consola.info('🚀 Launching new Fly.io app...');
@@ -22,11 +22,11 @@ export const launch = withErrorHandling(async (args, config) => {
   // Ensure .nuxfly directory exists
   const nuxflyDir = await ensureNuxflyDir(config);
   
-  // Check if fly.toml already exists in project root
-  const rootFlyToml = join(process.cwd(), 'fly.toml');
-  if (fileExists(rootFlyToml)) {
+  // Check if environment-specific fly.toml already exists
+  const envFlyToml = getEnvironmentSpecificFlyTomlPath();
+  if (envFlyToml && fileExists(envFlyToml)) {
     consola.error('❌ App already exists!');
-    consola.info(`Found existing fly.toml at: ${rootFlyToml}`);
+    consola.info(`Found existing fly.toml at: ${envFlyToml}`);
     consola.info('If you want to recreate the app, please remove the existing fly.toml file first.');
     process.exit(1);
   }
@@ -39,9 +39,22 @@ export const launch = withErrorHandling(async (args, config) => {
     await writeFile(join(nuxflyDir, 'Dockerfile'), dockerfileContent);
   }
 
+  // Determine app name based on environment if not explicitly provided
+  let appName = args.name;
+  if (!appName) {
+    const env = process.env.NUXFLY_ENV;
+    if (env && env !== 'prod') {
+      // Load base config to get the base app name
+      const baseConfig = await loadConfig();
+      const baseAppName = baseConfig.app || 'nuxfly-app';
+      appName = `${baseAppName}-${env}`;
+      consola.info(`Using environment-specific app name: ${appName}`);
+    }
+  }
+  
   // Prepare launch options
   const launchOptions = {
-    name: args.name,
+    name: appName,
     region: args.region,
     noDeploy: args['no-deploy'] !== false, // Default to true (no deploy)
     noObjectStorage: true, // Skip default bucket creation
@@ -64,16 +77,28 @@ export const launch = withErrorHandling(async (args, config) => {
     consola.info('Running fly launch...');
     await flyLaunch(launchOptions, config);
     
-    // Check if fly.toml was created in root
-    const rootFlyToml = join(process.cwd(), 'fly.toml');
-    if (fileExists(rootFlyToml)) {
-      consola.success(`fly.toml created at ${rootFlyToml}`);
+    // Check if fly.toml was created and move it to environment-specific location
+    const defaultFlyToml = join(process.cwd(), 'fly.toml');
+    const targetFlyToml = envFlyToml || defaultFlyToml;
+    
+    if (fileExists(defaultFlyToml)) {
+      consola.success(`fly.toml created at ${defaultFlyToml}`);
 
-      // Write the updated fly.toml back to the root
+      // Load config and generate updated content
       newConfig = await loadConfig();
       const newFlyTomlContent = generateFlyToml(newConfig);
-      await writeFile(rootFlyToml, newFlyTomlContent);
-      consola.success('Updated fly.toml with nuxfly configuration');
+      
+      // If we need to move to environment-specific location
+      if (envFlyToml && envFlyToml !== defaultFlyToml) {
+        await writeFile(envFlyToml, newFlyTomlContent);
+        consola.success(`Moved fly.toml to environment-specific location: ${envFlyToml}`);
+        
+        // Remove the default fly.toml
+        await unlink(defaultFlyToml);
+      } else {
+        await writeFile(targetFlyToml, newFlyTomlContent);
+        consola.success('Updated fly.toml with nuxfly configuration');
+      }
       
       // Overwrite .dockerignore file that was generated incorrectly by flyctl launch
       const dockerignoreContent = generateDockerignore();
@@ -83,7 +108,7 @@ export const launch = withErrorHandling(async (args, config) => {
       consola.info('TODO: Add other generated files here...');
 
       // Create SQLite volume after successful launch
-      const region = await extractRegionFromFlyToml(rootFlyToml);
+      const region = await extractRegionFromFlyToml(targetFlyToml);
       if (region) {
         const volumeSize = args.size || '1';
         try {

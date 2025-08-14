@@ -1,7 +1,7 @@
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import consola from 'consola';
-import { ConfigError, NotNuxtProjectError, validateRequired } from './errors.mjs';
+import { ConfigError, NotNuxtProjectError, NuxflyEnvNotSetError, validateRequired } from './errors.mjs';
 import { loadNuxtConfig } from '@nuxt/kit';
 import { parseFlyToml } from '../templates/fly-toml.mjs';
 
@@ -24,8 +24,8 @@ export async function loadConfig() {
     env: process.env,
   })
 
-  // Read app name from fly.toml if it exists
-  const flyTomlPath = join(cwd, 'fly.toml');
+  // Read app name from environment-specific fly.toml if it exists
+  const flyTomlPath = getEnvironmentSpecificFlyTomlPath() || join(cwd, 'fly.toml');
   const flyTomlExists = existsSync(flyTomlPath);
   let flyConfig = {};
   if (flyTomlExists) {
@@ -54,6 +54,7 @@ export async function loadConfig() {
     nuxflyDir: join(cwd, '.nuxfly'),
     flyConfig,
     flyTomlExists,
+    flyTomlPath,
     distPath: join(cwd, '.output'),
   };
   
@@ -179,10 +180,72 @@ export function getNuxflyDir(config) {
 }
 
 /**
- * Get the fly.toml path
+ * Check if there are any environment-specific fly.toml files
+ */
+export function hasEnvironmentSpecificFiles() {
+  const cwd = process.cwd();
+  
+  try {
+    const files = readdirSync(cwd);
+    return files.some(file => /^fly\.[^.]+\.toml$/.test(file));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get environment-specific fly.toml path based on NUXFLY_ENV
+ */
+export function getEnvironmentSpecificFlyTomlPath() {
+  const env = process.env.NUXFLY_ENV;
+  const hasEnvFiles = hasEnvironmentSpecificFiles();
+  
+  // If there are environment-specific files but no NUXFLY_ENV, throw error
+  if (hasEnvFiles && !env) {
+    throw new NuxflyEnvNotSetError();
+  }
+  
+  // If no environment-specific files exist, default to prod (fly.toml)
+  if (!hasEnvFiles) {
+    return join(process.cwd(), 'fly.toml');
+  }
+  
+  // Use environment-specific file
+  if (env === 'prod') {
+    return join(process.cwd(), 'fly.toml');
+  } else {
+    return join(process.cwd(), `fly.${env}.toml`);
+  }
+}
+
+/**
+ * Get the fly.toml path (with NUXFLY_ENV support)
  */
 export function getFlyTomlPath(config) {
-  return config._runtime?.flyTomlPath || join(process.cwd(), 'fly.toml');
+  // If runtime has a specific path, use it (for backwards compatibility)
+  if (config?._runtime?.flyTomlPath) {
+    return config._runtime.flyTomlPath;
+  }
+  
+  // Use environment-specific path logic
+  return getEnvironmentSpecificFlyTomlPath();
+}
+
+/**
+ * Validate NUXFLY_ENV is set when environment-specific files exist
+ */
+export function validateNuxflyEnv(commandName) {
+  // Commands that don't require NUXFLY_ENV
+  const exemptCommands = ['help', 'version', 'proxy'];
+  if (exemptCommands.includes(commandName)) {
+    return true;
+  }
+  
+  // The validation is now handled in getEnvironmentSpecificFlyTomlPath()
+  // This function just calls it to trigger the validation
+  getEnvironmentSpecificFlyTomlPath();
+  
+  return true;
 }
 
 /**

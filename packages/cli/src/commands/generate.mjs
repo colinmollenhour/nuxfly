@@ -1,9 +1,8 @@
 import { join } from 'path';
 import consola from 'consola';
 import { ensureNuxflyDir, writeFile, copyDistDir } from '../utils/filesystem.mjs';
-import { validateFlyTomlExists } from '../utils/validation.mjs';
 import { withErrorHandling } from '../utils/errors.mjs';
-import { hasDistDir } from '../utils/config.mjs';
+import { hasDistDir, getEnvironmentSpecificFlyTomlPath } from '../utils/config.mjs';
 import { buildApplication } from '../utils/build.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 import { generateFlyToml } from '../templates/fly-toml.mjs';
@@ -14,8 +13,7 @@ import { generateFlyToml } from '../templates/fly-toml.mjs';
 export const generate = withErrorHandling(async (args, config) => {
   consola.info('⚡ Generating deployment files...');
   
-  // Validate that fly.toml exists
-  validateFlyTomlExists(config);
+  // Note: Generate command creates fly.toml, so we don't validate its existence first
 
   // Validate Nuxt project structure
   if (!hasDistDir(config) && !args.build) {
@@ -35,10 +33,12 @@ export const generate = withErrorHandling(async (args, config) => {
   const nuxflyDir = await ensureNuxflyDir(config);
   
   try {
-    // Generate fly.toml in project root
+    // Generate environment-specific fly.toml
     consola.info(`Step ${step++}: Generating fly.toml...`);
     const flyTomlContent = generateFlyToml(config);
-    await writeFile(join(process.cwd(), 'fly.toml'), flyTomlContent);
+    const flyTomlPath = getEnvironmentSpecificFlyTomlPath() || join(process.cwd(), 'fly.toml');
+    await writeFile(flyTomlPath, flyTomlContent);
+    consola.success(`Generated fly.toml at: ${flyTomlPath}`);
     
     // Generate Dockerfile
     consola.info(`Step ${step++}: Generating Dockerfile...`);
@@ -75,8 +75,9 @@ export const generate = withErrorHandling(async (args, config) => {
  * Display list of generated files
  */
 function displayGeneratedFiles(hasDistCopy, build) {
+  const flyTomlPath = getEnvironmentSpecificFlyTomlPath() || 'fly.toml';
   const files = [
-    '📄 fly.toml (Fly.io configuration)',
+    `📄 ${flyTomlPath} (Fly.io configuration)`,
     '🐳 Dockerfile (container image)',
     '🚫 .dockerignore (build exclusions)',
   ];

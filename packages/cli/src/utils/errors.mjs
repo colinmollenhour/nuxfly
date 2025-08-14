@@ -24,12 +24,12 @@ export class FlyctlNotFoundError extends NuxflyError {
 }
 
 /**
- * Error for when .nuxfly/fly.toml is missing
+ * Error for when fly.toml is missing
  */
 export class FlyTomlNotFoundError extends NuxflyError {
   constructor() {
-    super('No .nuxfly/fly.toml found', {
-      suggestion: "Run 'nuxfly launch' to create a new app or 'nuxfly import' to import an existing app",
+    super('No fly.toml found', {
+      suggestion: "Run 'nuxfly launch' to create a new app or 'nuxfly import' to import an existing app. Make sure NUXFLY_ENV is set.",
       exitCode: 2,
     });
   }
@@ -55,6 +55,18 @@ export class NotNuxtProjectError extends NuxflyError {
     super('Not a Nuxt project', {
       suggestion: 'Make sure you are in a directory with a nuxt.config.js/ts file',
       exitCode: 4,
+    });
+  }
+}
+
+/**
+ * Error for when NUXFLY_ENV is not set
+ */
+export class NuxflyEnvNotSetError extends NuxflyError {
+  constructor() {
+    super('NUXFLY_ENV environment variable is not set', {
+      suggestion: 'Set NUXFLY_ENV to specify your environment (e.g., export NUXFLY_ENV=staging)',
+      exitCode: 5,
     });
   }
 }

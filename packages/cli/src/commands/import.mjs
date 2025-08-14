@@ -3,10 +3,10 @@ import { saveAppConfig } from '../utils/flyctl.mjs';
 import { ensureNuxflyDir } from '../utils/filesystem.mjs';
 import { validateAppAccess } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
-import { getAppName, getFlyTomlPath } from '../utils/config.mjs';
+import { getAppName, getFlyTomlPath, getEnvironmentSpecificFlyTomlPath } from '../utils/config.mjs';
 
 /**
- * Import command - runs fly config save to restore .nuxfly/fly.toml
+ * Import command - runs fly config save to restore environment-specific fly.toml
  */
 export const importConfig = withErrorHandling(async (args, config) => {
   consola.info('📥 Importing existing Fly.io app configuration...');
@@ -26,13 +26,13 @@ export const importConfig = withErrorHandling(async (args, config) => {
   // Ensure .nuxfly directory exists
   await ensureNuxflyDir(config);
   
-  // Get output path for fly.toml
-  const flyTomlPath = getFlyTomlPath(config);
+  // Get output path for environment-specific fly.toml
+  const flyTomlPath = getEnvironmentSpecificFlyTomlPath() || getFlyTomlPath(config);
   
   try {
     consola.info(`Importing configuration for app: ${appName}`);
     
-    // Save app config to .nuxfly/fly.toml
+    // Save app config to environment-specific fly.toml
     await saveAppConfig(appName, flyTomlPath, config);
     
     consola.success(`Successfully imported configuration to ${flyTomlPath}`);
@@ -57,11 +57,11 @@ function displayNextSteps(appName) {
     message: `App "${appName}" configuration has been imported.
 
 Next steps:
-  1. Review the configuration: cat .nuxfly/fly.toml
+  1. Review the configuration: cat ${flyTomlPath}
   2. Update your nuxt.config.js nuxfly section if needed
   3. Deploy your app: nuxfly deploy
 
-Your fly.toml is now available in .nuxfly/fly.toml`,
+Your fly.toml is now available at ${flyTomlPath}`,
     style: {
       borderColor: 'blue',
       padding: 1,
