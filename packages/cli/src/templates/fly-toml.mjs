@@ -72,9 +72,9 @@ export function generateFlyToml(config = {}) {
 
   // VM configuration
   toml += '[[vm]]\n';
-  toml += `  memory = "${memory}"\n`;
-  toml += `  cpu_kind = "${cpu_kind}"\n`;
-  toml += `  cpus = ${cpus}\n\n`;
+  toml += `  memory = "${memory || '512mb'}"\n`;
+  toml += `  cpu_kind = "${cpu_kind || 'shared'}"\n`;
+  toml += `  cpus = ${cpus || 1}\n\n`;
 
   // HTTP service health checks
   toml += '#  [services.http_checks]\n';

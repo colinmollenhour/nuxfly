@@ -1,6 +1,6 @@
 node_modules
-*.md
-!README.md
+/*.md
+!/README.md
 .settings.local.json
 dist/
 .output/

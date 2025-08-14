@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readFile, unlink } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import consola from 'consola';
 import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
 import { ensureNuxflyDir, fileExists, writeFile } from '../utils/filesystem.mjs';
@@ -25,10 +25,24 @@ export const launch = withErrorHandling(async (args, config) => {
   // Check if environment-specific fly.toml already exists
   const envFlyToml = getEnvironmentSpecificFlyTomlPath();
   if (envFlyToml && fileExists(envFlyToml)) {
-    consola.error('❌ App already exists!');
-    consola.info(`Found existing fly.toml at: ${envFlyToml}`);
-    consola.info('If you want to recreate the app, please remove the existing fly.toml file first.');
-    process.exit(1);
+    // Check if the app actually exists on Fly.io
+    try {
+      const { checkAppAccess } = await import('../utils/validation.mjs');
+      const appName = args.name || (process.env.NUXFLY_ENV && process.env.NUXFLY_ENV !== 'prod'
+        ? `${config.app || 'nuxfly-app'}-${process.env.NUXFLY_ENV}`
+        : config.app || 'nuxfly-app');
+      
+      await checkAppAccess(appName, config);
+      
+      // If we get here, the app exists on Fly.io
+      consola.error('❌ App already exists on Fly.io!');
+      consola.info(`App "${appName}" already exists on Fly.io`);
+      consola.info('If you want to recreate the app, please remove it from Fly.io first.');
+      process.exit(1);
+    } catch {
+      // App doesn't exist on Fly.io, so we can proceed
+      consola.info(`Found existing fly.toml file but app doesn't exist on Fly.io - proceeding with launch`);
+    }
   }
   
   // Generate Dockerfile
@@ -58,6 +72,7 @@ export const launch = withErrorHandling(async (args, config) => {
     region: args.region,
     noDeploy: args['no-deploy'] !== false, // Default to true (no deploy)
     noObjectStorage: true, // Skip default bucket creation
+    config: envFlyToml !== join(process.cwd(), 'fly.toml') ? envFlyToml : undefined,
     extraArgs: ['--ha=false'], // Will be populated with any additional args
   };
   
@@ -73,109 +88,98 @@ export const launch = withErrorHandling(async (args, config) => {
   let newConfig;
   
   try {
-    // Run fly launch
+    // Generate environment-specific fly.toml first
+    newConfig = await loadConfig();
+    
+    // CRITICAL FIX: Ensure the app name and region are set in the config object
+    // These should come from the launch options, not just the fly.toml
+    if (appName && !newConfig.app) {
+      newConfig.app = appName;
+      consola.debug(`Set app name in config: ${appName}`);
+    }
+    
+    if (args.region && !newConfig.region) {
+      newConfig.region = args.region;
+      consola.debug(`Set region in config: ${args.region}`);
+    }
+    
+    const newFlyTomlContent = generateFlyToml(newConfig);
+    await writeFile(envFlyToml, newFlyTomlContent);
+    consola.success(`Generated environment-specific fly.toml: ${envFlyToml}`);
+    
+    // Generate .dockerignore file
+    const dockerignoreContent = generateDockerignore();
+    await writeFile(join(process.cwd(), '.dockerignore'), dockerignoreContent);
+    
+    // Run fly launch with the pre-generated config
     consola.info('Running fly launch...');
-    await flyLaunch(launchOptions, config);
+    consola.debug('Launch command:', `flyctl launch ${launchOptions.name ? `--name ${launchOptions.name}` : ''} ${launchOptions.region ? `--region ${launchOptions.region}` : ''} ${launchOptions.noDeploy ? '--no-deploy' : ''} --no-object-storage ${launchOptions.config ? `--config ${launchOptions.config}` : ''} --yes --ha=false`);
+    await flyLaunch(launchOptions, newConfig);
     
-    // Check if fly.toml was created and move it to environment-specific location
-    const defaultFlyToml = join(process.cwd(), 'fly.toml');
-    const targetFlyToml = envFlyToml || defaultFlyToml;
+    // TODO - add all other generated files here
+    consola.info('TODO: Add other generated files here...');
+
+    // Create SQLite volume after successful launch
+    const region = args.region || await extractRegionFromFlyToml(envFlyToml) || 'ord';
+    const volumeSize = args.size || '1';
+    try {
+      await createSqliteVolume(region, volumeSize, newConfig);
+    } catch (error) {
+      throw new NuxflyError(`Failed to create SQLite volume: ${error.message}`, {
+        suggestion: `You can create the volume manually with: flyctl volumes create sqlite_data --region ${region} --size ${volumeSize}`,
+      });
+    }
     
-    if (fileExists(defaultFlyToml)) {
-      consola.success(`fly.toml created at ${defaultFlyToml}`);
+    // Create S3 buckets after successful launch
+    try {
+      const existingBuckets = await getExistingBuckets(newConfig);
+      consola.info('🪣 Creating S3 buckets...');
 
-      // Load config and generate updated content
-      newConfig = await loadConfig();
-      const newFlyTomlContent = generateFlyToml(newConfig);
+
+      // Get organization name for storage commands
+      const orgName = await getOrgName(newConfig);
+      if (!orgName) {
+        consola.warn('Could not determine organization name. Bucket creation may fail.');
+        consola.info('You can create buckets manually later during deployment.');
+        return;
+      }
+      consola.debug(`Using organization: ${orgName}`);
       
-      // If we need to move to environment-specific location
-      if (envFlyToml && envFlyToml !== defaultFlyToml) {
-        await writeFile(envFlyToml, newFlyTomlContent);
-        consola.success(`Moved fly.toml to environment-specific location: ${envFlyToml}`);
-        
-        // Remove the default fly.toml
-        await unlink(defaultFlyToml);
-      } else {
-        await writeFile(targetFlyToml, newFlyTomlContent);
-        consola.success('Updated fly.toml with nuxfly configuration');
+      // Load Nuxt config to detect bucket requirements
+      const nuxflyConfig = newConfig.nuxt?.nuxfly || {};
+
+      // Create litestream bucket
+      if (nuxflyConfig.litestream) {
+        if (!existingBuckets.includes(`${newConfig.app}-litestream`)) {
+          await createLitestreamBucket(orgName, newConfig);
+        } else {
+          consola.error('Litestream bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_LITESTREAM_S3_ secrets manually.');
+        }
       }
       
-      // Overwrite .dockerignore file that was generated incorrectly by flyctl launch
-      const dockerignoreContent = generateDockerignore();
-      await writeFile(join(process.cwd(), '.dockerignore'), dockerignoreContent);
-      
-      // TODO - add all other generated files here
-      consola.info('TODO: Add other generated files here...');
-
-      // Create SQLite volume after successful launch
-      const region = await extractRegionFromFlyToml(targetFlyToml);
-      if (region) {
-        const volumeSize = args.size || '1';
-        try {
-          await createSqliteVolume(region, volumeSize, newConfig);
-        } catch (error) {
-          throw new NuxflyError(`Failed to create SQLite volume: ${error.message}`, {
-            suggestion: 'You can create the volume manually with: flyctl volumes create sqlite_data --region <region> --size <size>',
-          });
+      // Create public bucket if configured
+      if (nuxflyConfig.publicStorage) {
+        if (!existingBuckets.includes(`${newConfig.app}-public`)) {
+          await createPublicBucket(orgName, newConfig);
+        } else {
+          consola.error('Public bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_PUBLIC_BUCKET_S3_ secrets manually.');
         }
-      } else {
-        throw new NuxflyError(`Failed to find the region from fly.toml`, {
-          suggestion: 'You can create the volume manually with: flyctl volumes create sqlite_data --region <region> --size <size>',
-        });
       }
       
-      // Create S3 buckets after successful launch
-      try {
-        const existingBuckets = await getExistingBuckets(newConfig);
-        consola.info('🪣 Creating S3 buckets...');
-
-        // Get organization name for storage commands
-        const orgName = await getOrgName(newConfig);
-        if (!orgName) {
-          consola.warn('Could not determine organization name. Bucket creation may fail.');
-          consola.info('You can create buckets manually later during deployment.');
-          return;
+      // Create private bucket if configured
+      if (nuxflyConfig.privateStorage) {
+        if (!existingBuckets.includes(`${newConfig.app}-private`)) {
+          await createPrivateBucket(orgName, newConfig);
+        } else {
+          consola.error('Private bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_PRIVATE_BUCKET_S3_ secrets manually.');
         }
-        consola.debug(`Using organization: ${orgName}`);
-        
-        // Load Nuxt config to detect bucket requirements
-        const nuxflyConfig = newConfig.nuxt?.nuxfly || {};
-
-        // Create litestream bucket
-        if (nuxflyConfig.litestream) {
-          if (!existingBuckets.includes(`${newConfig.app}-litestream`)) {
-            await createLitestreamBucket(orgName, newConfig);
-          } else {
-            consola.error('Litestream bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_LITESTREAM_S3_ secrets manually.');
-          }
-        }
-        
-        // Create public bucket if configured
-        if (nuxflyConfig.publicStorage) {
-          if (!existingBuckets.includes(`${newConfig.app}-public`)) {
-            await createPublicBucket(orgName, newConfig);
-          } else {
-            consola.error('Public bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_PUBLIC_BUCKET_S3_ secrets manually.');
-          }
-        }
-        
-        // Create private bucket if configured
-        if (nuxflyConfig.privateStorage) {
-          if (!existingBuckets.includes(`${newConfig.app}-private`)) {
-            await createPrivateBucket(orgName, newConfig);
-          } else {
-            consola.error('Private bucket already exists, skipping creation. You will need to set the NUXT_NUXFLY_PRIVATE_BUCKET_S3_ secrets manually.');
-          }
-        }
-
-      } catch (error) {
-        throw new NuxflyError(`Failed to create S3 buckets: ${error.message}`, {
-          suggestion: 'You can create buckets manually later with: nuxfly buckets create',
-          cause: error,
-        });
       }
-    } else {
-      consola.warn('No fly.toml was generated. Launch may have been cancelled or failed.');
+
+    } catch (error) {
+      throw new NuxflyError(`Failed to create S3 buckets: ${error.message}`, {
+        suggestion: 'You can create buckets manually later with: nuxfly buckets create',
+        cause: error,
+      });
     }
     
     // Display next steps

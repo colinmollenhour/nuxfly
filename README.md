@@ -5,6 +5,57 @@ This monorepo contains the Nuxfly CLI and Nuxt module for deploying Nuxt applica
 > [!WARNING]
 > This project is in early development and may not be fully functional yet.
 
+## Quick Start
+
+### Install and Launch
+```bash
+# Install CLI globally
+npm install -g @nuxfly/cli
+
+# In your Nuxt project, install the module
+npm install @nuxfly/core
+
+# Add to nuxt.config.ts
+export default defineNuxtConfig({
+  modules: ['@nuxfly/core']
+})
+
+# Launch your app
+nuxfly launch
+```
+
+### Multi-Environment Support
+
+Nuxfly supports deploying to multiple environments (staging, development, etc.) using the `NUXFLY_ENV` environment variable:
+
+```bash
+# Production (default) - creates fly.toml
+nuxfly launch my-app
+
+# Staging environment - creates fly.staging.toml
+export NUXFLY_ENV=staging
+nuxfly launch my-app-staging
+
+# Development environment - creates fly.development.toml
+export NUXFLY_ENV=development
+nuxfly launch my-app-dev
+
+# Deploy to specific environments
+NUXFLY_ENV=staging nuxfly deploy
+NUXFLY_ENV=development nuxfly deploy
+```
+
+**File naming convention:**
+- `fly.toml` - Production (default)
+- `fly.staging.toml` - Staging environment
+- `fly.development.toml` - Development environment
+
+**When is NUXFLY_ENV required?**
+- **Single environment** (only `fly.toml`): Optional
+- **Multi-environment** (multiple `fly.*.toml` files): Required
+
+[📖 Read the full documentation](./docs/1.guide/1.index.md) for detailed setup and usage instructions.
+
 ## Packages
 
 ### [@nuxfly/cli](./packages/cli)
@@ -32,6 +83,19 @@ cd packages/cli && pnpm build
 
 # Build Core Module
 cd packages/core && pnpm build
+```
+
+### Testing with Playground
+The playground directory contains a test Nuxt application for development:
+
+```bash
+# Test production deployment
+cd playground
+nuxfly launch
+
+# Test staging deployment
+cd playground
+NUXFLY_ENV=staging nuxfly launch playground-staging
 ```
 
 ## Publishing

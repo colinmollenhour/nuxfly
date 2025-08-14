@@ -1,4 +1,4 @@
-import useSqliteDatabase from '../../../src/runtime/composables/useSqliteDatabase'
+import useSqliteDatabase from '../../../packages/core/src/runtime/composables/useSqliteDatabase'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as schema from '@@/server/db/schema'
 

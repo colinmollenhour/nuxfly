@@ -40,9 +40,9 @@ export function buildFlyctlArgs(command, userArgs = [], config = {}) {
     consola.debug(`Using config: ${flyTomlPath}`);
   }
   
-  // Add app flag if configured
+  // Add app flag if configured (but not for launch or storage commands)
   const appName = getAppName(config);
-  if (command !== 'storage' && appName) {
+  if (command !== 'storage' && command !== 'launch' && appName) {
     args.push('--app', appName);
     consola.debug(`Using app: ${appName}`);
   }
@@ -281,6 +281,13 @@ export const flyLaunch = withErrorHandling(async (options = {}, config = {}) => 
   if (options.noObjectStorage) {
     args.push('--no-object-storage');
   }
+  
+  if (options.config) {
+    args.push('--config', options.config);
+  }
+  
+  // Always add --yes to skip prompts
+  args.push('--yes');
   
   // Add any additional arguments
   if (options.extraArgs) {

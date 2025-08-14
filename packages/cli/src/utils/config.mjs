@@ -205,17 +205,22 @@ export function getEnvironmentSpecificFlyTomlPath() {
     throw new NuxflyEnvNotSetError();
   }
   
-  // If no environment-specific files exist, default to prod (fly.toml)
+  // If NUXFLY_ENV is explicitly set, always use environment-specific naming
+  if (env) {
+    if (env === 'prod') {
+      return join(process.cwd(), 'fly.toml');
+    } else {
+      return join(process.cwd(), `fly.${env}.toml`);
+    }
+  }
+  
+  // If no NUXFLY_ENV and no environment-specific files exist, default to fly.toml
   if (!hasEnvFiles) {
     return join(process.cwd(), 'fly.toml');
   }
   
-  // Use environment-specific file
-  if (env === 'prod') {
-    return join(process.cwd(), 'fly.toml');
-  } else {
-    return join(process.cwd(), `fly.${env}.toml`);
-  }
+  // Fallback to fly.toml if no environment is specified
+  return join(process.cwd(), 'fly.toml');
 }
 
 /**

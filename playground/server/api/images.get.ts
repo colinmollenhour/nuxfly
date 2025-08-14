@@ -1,4 +1,4 @@
-import usePublicStorage from '../../../src/runtime/composables/usePublicStorage'
+import usePublicStorage from '../../../packages/core/src/runtime/composables/usePublicStorage'
 
 export default defineEventHandler(async () => {
   const storage = usePublicStorage()

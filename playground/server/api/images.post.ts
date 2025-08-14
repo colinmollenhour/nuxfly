@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import usePublicStorage from '../../../src/runtime/composables/usePublicStorage'
+import usePublicStorage from '../../../packages/core/src/runtime/composables/usePublicStorage'
 
 export default defineEventHandler(async (event) => {
   const file = await readMultipartFormData(event)
