@@ -1,5 +1,5 @@
 import consola from 'consola';
-import { flyDeploy, checkAppAccess } from '../utils/flyctl.mjs';
+import { flyDeploy, checkAppAccess, ensurePublicBucketUrlSecret } from '../utils/flyctl.mjs';
 import { validateDeploymentConfig } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { hasDistDir } from '../utils/config.mjs';
@@ -124,6 +124,14 @@ export const deploy = withErrorHandling(async (args, config) => {
     
     // Check and create any missing buckets before deployment
     await ensureBucketsExist(config);
+    
+    // Set public bucket URL secret if needed
+    try {
+      await ensurePublicBucketUrlSecret(config);
+    } catch (error) {
+      consola.warn(`Failed to set public bucket URL secret: ${error.message}`);
+      consola.debug('Continuing with deployment...');
+    }
     
     // Prepare deploy options
     const deployOptions = {

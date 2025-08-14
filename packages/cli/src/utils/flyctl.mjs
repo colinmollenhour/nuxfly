@@ -338,3 +338,83 @@ export const saveAppConfig = withErrorHandling(async (appName, outputPath, confi
     },
   });
 });
+
+/**
+ * Get app secrets
+ */
+export const getAppSecrets = withErrorHandling(async (config = {}) => {
+  try {
+    const result = await executeFlyctlWithOutput('secrets', ['list', '--json'], config);
+    return parseFlyctlJSON(result.stdout) || [];
+  } catch (error) {
+    consola.debug('Failed to get app secrets:', error.message);
+    return [];
+  }
+});
+
+/**
+ * Set app secret
+ */
+export const setAppSecret = withErrorHandling(async (key, value, config = {}) => {
+  try {
+    const args = ['set', `${key}=${value}`];
+    await executeFlyctl('secrets', args, config);
+    consola.success(`✅ Set secret: ${key}`);
+    return true;
+  } catch (error) {
+    consola.debug(`Failed to set secret ${key}:`, error.message);
+    return false;
+  }
+});
+
+/**
+ * Check if a secret exists
+ */
+export const checkSecretExists = withErrorHandling(async (key, config = {}) => {
+  try {
+    const secrets = await getAppSecrets(config);
+    return secrets.some(secret => secret.Name === key);
+  } catch (error) {
+    consola.debug(`Failed to check if secret ${key} exists:`, error.message);
+    return false;
+  }
+});
+
+/**
+ * Set public bucket URL secret if publicStorage is enabled and secret doesn't exist
+ */
+export const ensurePublicBucketUrlSecret = withErrorHandling(async (config) => {
+  const nuxflyConfig = config.nuxt?.nuxfly || {};
+  
+  if (!nuxflyConfig.publicStorage) {
+    consola.debug('Public storage not enabled, skipping public bucket URL secret');
+    return false;
+  }
+  
+  const secretKey = 'NUXT_PUBLIC_S3_PUBLIC_URL';
+  const appName = config.app;
+  
+  if (!appName) {
+    consola.debug('No app name found, cannot set public bucket URL secret');
+    return false;
+  }
+  
+  // Check if secret already exists
+  const secretExists = await checkSecretExists(secretKey, config);
+  if (secretExists) {
+    consola.debug(`Secret ${secretKey} already exists, skipping`);
+    return false;
+  }
+  
+  // Generate public bucket URL
+  const publicBucketUrl = `https://${appName}-public.t3.storageapi.dev`;
+  
+  consola.info(`🔐 Setting public bucket URL secret: ${secretKey}`);
+  const success = await setAppSecret(secretKey, publicBucketUrl, config);
+  
+  if (success) {
+    consola.success(`✅ Set public bucket URL: ${publicBucketUrl}`);
+  }
+  
+  return success;
+});

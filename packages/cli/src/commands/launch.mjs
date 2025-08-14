@@ -1,7 +1,7 @@
 import { join, basename } from 'path';
 import { readFile } from 'fs/promises';
 import consola from 'consola';
-import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
+import { flyLaunch, executeFlyctl, ensurePublicBucketUrlSecret } from '../utils/flyctl.mjs';
 import { ensureNuxflyDir, fileExists, writeFile, copyDrizzleMigrations } from '../utils/filesystem.mjs';
 import { validateLaunchCommand } from '../utils/validation.mjs';
 import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
@@ -194,6 +194,14 @@ export const launch = withErrorHandling(async (args, config) => {
         suggestion: 'You can create buckets manually later with: nuxfly buckets create',
         cause: error,
       });
+    }
+    
+    // Set public bucket URL secret if needed
+    try {
+      await ensurePublicBucketUrlSecret(newConfig);
+    } catch (error) {
+      consola.warn(`Failed to set public bucket URL secret: ${error.message}`);
+      consola.debug('Continuing with launch...');
     }
     
     // Display next steps
