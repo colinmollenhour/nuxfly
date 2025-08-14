@@ -1,4 +1,4 @@
-import { join } from 'path';
+import { join, basename } from 'path';
 import { readFile } from 'fs/promises';
 import consola from 'consola';
 import { flyLaunch, executeFlyctl } from '../utils/flyctl.mjs';
@@ -72,7 +72,7 @@ export const launch = withErrorHandling(async (args, config) => {
     region: args.region,
     noDeploy: args['no-deploy'] !== false, // Default to true (no deploy)
     noObjectStorage: true, // Skip default bucket creation
-    config: envFlyToml !== join(process.cwd(), 'fly.toml') ? envFlyToml : undefined,
+    config: envFlyToml !== join(process.cwd(), 'fly.toml') ? basename(envFlyToml) : undefined,
     extraArgs: ['--ha=false'], // Will be populated with any additional args
   };
   
