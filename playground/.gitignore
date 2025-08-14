@@ -2,9 +2,12 @@
 .output
 .data
 .nuxt
+.nuxfly
+.nuxfly-backup
 .nitro
 .cache
 dist
+fly*.toml
 
 # Node dependencies
 node_modules

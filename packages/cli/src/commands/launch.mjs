@@ -8,6 +8,7 @@ import { withErrorHandling, NuxflyError } from '../utils/errors.mjs';
 import { getExistingBuckets, getOrgName, createLitestreamBucket, createPrivateBucket, createPublicBucket } from '../utils/buckets.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 import { generateFlyToml } from '../templates/fly-toml.mjs';
+import { generateDrizzleConfig, generateLitestreamConfig, generateStartScript, generateDrizzlePackageJson } from '../templates/database.mjs';
 import { loadConfig, getEnvironmentSpecificFlyTomlPath } from '../utils/config.mjs';
 
 /**
@@ -116,8 +117,32 @@ export const launch = withErrorHandling(async (args, config) => {
     consola.debug('Launch command:', `flyctl launch ${launchOptions.name ? `--name ${launchOptions.name}` : ''} ${launchOptions.region ? `--region ${launchOptions.region}` : ''} ${launchOptions.noDeploy ? '--no-deploy' : ''} --no-object-storage ${launchOptions.config ? `--config ${launchOptions.config}` : ''} --yes --ha=false`);
     await flyLaunch(launchOptions, newConfig);
     
-    // TODO - add all other generated files here
-    consola.info('TODO: Add other generated files here...');
+    // Generate database-related files
+    consola.info('📄 Generating database configuration files...');
+    
+    // Generate drizzle.config.ts
+    const drizzleConfigContent = generateDrizzleConfig();
+    await writeFile(join(nuxflyDir, 'drizzle.config.ts'), drizzleConfigContent);
+    consola.success('Generated drizzle.config.ts');
+    
+    // Generate litestream.yml
+    const litestreamConfigContent = generateLitestreamConfig({});
+    await writeFile(join(nuxflyDir, 'litestream.yml'), litestreamConfigContent);
+    consola.success('Generated litestream.yml');
+    
+    // Generate start.sh
+    const startScriptContent = generateStartScript();
+    await writeFile(join(nuxflyDir, 'start.sh'), startScriptContent);
+    consola.success('Generated start.sh');
+    
+    // Generate package.json for drizzle-kit
+    const drizzlePackageJsonContent = await generateDrizzlePackageJson();
+    await writeFile(join(nuxflyDir, 'package.json'), drizzlePackageJsonContent);
+    consola.success('Generated package.json for drizzle-kit');
+    
+    // Generate package-lock.json (empty for npm install to populate)
+    await writeFile(join(nuxflyDir, 'package-lock.json'), '{}');
+    consola.success('Generated package-lock.json');
 
     // Create SQLite volume after successful launch
     const region = args.region || await extractRegionFromFlyToml(envFlyToml) || 'ord';
@@ -260,6 +285,9 @@ async function createSqliteVolume(region, size, config) {
  * Display helpful next steps after successful launch
  */
 function displayNextSteps(config) {
+  const flyTomlPath = getEnvironmentSpecificFlyTomlPath() || 'fly.toml';
+  const flyTomlFilename = flyTomlPath.split('/').pop();
+  
   consola.box({
     title: '🎉 App created successfully!',
     message: `Your app "${config.app}" has been created on Fly.io but is not yet deployed.
@@ -269,7 +297,7 @@ Next steps:
   2. Inspect everything in .nuxfly/ and set additional environment variables (optional): nuxfly secrets set KEY=value
   3. Deploy your app: nuxfly deploy
 
-If you're using version control, it is safe to commit your fly.toml file and the contents of ./nuxfly.`,
+If you're using version control, it is recommended to commit your ${flyTomlFilename} file and the contents of .nuxfly/.`,
     style: {
       borderColor: 'green',
       padding: 1,

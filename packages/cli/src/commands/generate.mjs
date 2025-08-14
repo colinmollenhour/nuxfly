@@ -6,6 +6,7 @@ import { hasDistDir, getEnvironmentSpecificFlyTomlPath } from '../utils/config.m
 import { buildApplication } from '../utils/build.mjs';
 import { generateDockerfile, generateDockerignore } from '../templates/dockerfile.mjs';
 import { generateFlyToml } from '../templates/fly-toml.mjs';
+import { generateDrizzleConfig, generateLitestreamConfig, generateStartScript, generateDrizzlePackageJson } from '../templates/database.mjs';
 
 /**
  * Generate command - creates all fly-related files in .nuxfly directory
@@ -52,6 +53,28 @@ export const generate = withErrorHandling(async (args, config) => {
     const dockerignoreContent = generateDockerignore();
     await writeFile(join(process.cwd(), '.dockerignore'), dockerignoreContent);
     
+    // Generate database-related files
+    consola.info(`Step ${step++}: Generating database configuration files...`);
+    
+    // Generate drizzle.config.ts
+    const drizzleConfigContent = generateDrizzleConfig();
+    await writeFile(join(nuxflyDir, 'drizzle.config.ts'), drizzleConfigContent);
+    
+    // Generate litestream.yml
+    const litestreamConfigContent = generateLitestreamConfig({});
+    await writeFile(join(nuxflyDir, 'litestream.yml'), litestreamConfigContent);
+    
+    // Generate start.sh
+    const startScriptContent = generateStartScript();
+    await writeFile(join(nuxflyDir, 'start.sh'), startScriptContent);
+    
+    // Generate package.json for drizzle-kit
+    const drizzlePackageJsonContent = await generateDrizzlePackageJson();
+    await writeFile(join(nuxflyDir, 'package.json'), drizzlePackageJsonContent);
+    
+    // Generate package-lock.json (empty for npm install to populate)
+    // await writeFile(join(nuxflyDir, 'package-lock.json'), '{}');
+    
     // Copy dist directory if it exists
     if (hasDistDir(config)) {
       consola.info(`Step ${step++}: Copying .output directory...`);
@@ -78,8 +101,13 @@ function displayGeneratedFiles(hasDistCopy, build) {
   const flyTomlPath = getEnvironmentSpecificFlyTomlPath() || 'fly.toml';
   const files = [
     `📄 ${flyTomlPath} (Fly.io configuration)`,
-    '🐳 Dockerfile (container image)',
     '🚫 .dockerignore (build exclusions)',
+    '🐳 .nuxfly/Dockerfile (container image)',
+    '⚙️ .nuxfly/drizzle.config.ts (database configuration)',
+    '💾 .nuxfly/litestream.yml (database backup configuration)',
+    '🚀 .nuxfly/start.sh (startup script)',
+    '📦 .nuxfly/package.json (drizzle-kit dependencies)',
+    '🔒 .nuxfly/package-lock.json (dependency lock file)',
   ];
   
   if (hasDistCopy) {
