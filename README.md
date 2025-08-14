@@ -15,9 +15,14 @@ npm install -g @nuxfly/cli
 # In your Nuxt project, install the module
 npm install @nuxfly/core
 
-# Add to nuxt.config.ts
+# Add to nuxt.config.ts and set config flags
 export default defineNuxtConfig({
-  modules: ['@nuxfly/core']
+  modules: ['@nuxfly/core'],
+  nuxfly: {
+    litestream: true,      // Enable SQLite with Litestream backup
+    publicStorage: true,   // Enable public S3 storage
+    privateStorage: true,  // Enable private S3 storage
+  }
 })
 
 # Launch your app
@@ -30,15 +35,15 @@ Nuxfly supports deploying to multiple environments (staging, development, etc.) 
 
 ```bash
 # Production (default) - creates fly.toml
-nuxfly launch my-app
+nuxfly launch --name my-app
 
 # Staging environment - creates fly.staging.toml
 export NUXFLY_ENV=staging
-nuxfly launch my-app-staging
+nuxfly launch --name my-app-staging
 
 # Development environment - creates fly.development.toml
 export NUXFLY_ENV=development
-nuxfly launch my-app-dev
+nuxfly launch --name my-app-dev
 
 # Deploy to specific environments
 NUXFLY_ENV=staging nuxfly deploy
@@ -95,7 +100,7 @@ nuxfly launch
 
 # Test staging deployment
 cd playground
-NUXFLY_ENV=staging nuxfly launch playground-staging
+NUXFLY_ENV=staging nuxfly launch --name playground-staging
 ```
 
 ## Publishing

@@ -8,11 +8,11 @@ A powerful CLI tool for deploying Nuxt applications to Fly.io with integrated SQ
 ## Features
 
 - 🚀 **One-command deployment** - Deploy Nuxt apps to Fly.io with automatic infrastructure setup
-- 🗄️ **SQLite integration** - Automatic libSQL database provisioning and configuration
-- 📦 **S3 storage** - Built-in support for public and private file storage buckets
-- 🔧 **Database management** - Integrated Drizzle Studio for database operations
-- 📋 **Project templates** - Quick project scaffolding with best practices
+- 🗄️ **SQLite integration** - Automatic SQLite database continuous backup via Litestream
+- 🌧 **Drizzle integration** - Automatically applies Drizzle migrations on deployment
+- 📦 **Tigris (S3) storage** - Zero configuration to provision and access public and private file storage buckets
 - 🔄 **Import existing apps** - Seamlessly import and configure existing Fly.io applications
+- 🔧 **Database management** - Integrated Drizzle Studio for database operations
 
 ## Installation
 
@@ -24,7 +24,7 @@ npm install -g @nuxfly/cli
 
 ```bash
 # Create and deploy a new Nuxt app
-nuxfly launch my-app
+nuxfly launch --name my-app
 
 # Deploy an existing project
 nuxfly deploy
