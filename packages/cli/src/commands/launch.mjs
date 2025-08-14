@@ -26,24 +26,10 @@ export const launch = withErrorHandling(async (args, config) => {
   // Check if environment-specific fly.toml already exists
   const envFlyToml = getEnvironmentSpecificFlyTomlPath();
   if (envFlyToml && fileExists(envFlyToml)) {
-    // Check if the app actually exists on Fly.io
-    try {
-      const { checkAppAccess } = await import('../utils/validation.mjs');
-      const appName = args.name || (process.env.NUXFLY_ENV && process.env.NUXFLY_ENV !== 'prod'
-        ? `${config.app || 'nuxfly-app'}-${process.env.NUXFLY_ENV}`
-        : config.app || 'nuxfly-app');
-      
-      await checkAppAccess(appName, config);
-      
-      // If we get here, the app exists on Fly.io
-      consola.error('❌ App already exists on Fly.io!');
-      consola.info(`App "${appName}" already exists on Fly.io`);
-      consola.info('If you want to recreate the app, please remove it from Fly.io first.');
-      process.exit(1);
-    } catch {
-      // App doesn't exist on Fly.io, so we can proceed
-      consola.info(`Found existing fly.toml file but app doesn't exist on Fly.io - proceeding with launch`);
-    }
+    const flyTomlFilename = envFlyToml.split('/').pop();
+    consola.error(`❌ ${flyTomlFilename} already exists!`);
+    consola.info(`💡 Remove the existing ${flyTomlFilename} file first, or use a different environment with NUXFLY_ENV.`);
+    process.exit(1);
   }
   
   // Generate Dockerfile
