@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client'
+import { useRuntimeConfig } from '#imports'
 
 let db: ReturnType<typeof createClient> | undefined
 

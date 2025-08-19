@@ -1,4 +1,5 @@
 import * as Minio from 'minio'
+import { useRuntimeConfig } from '#imports'
 
 let minioClient: Minio.Client
 let bucket: string
@@ -6,7 +7,6 @@ let bucket: string
 export default function usePrivateStorage() {
   if (!minioClient) {
     const nuxflyConfig = useRuntimeConfig().nuxfly || {}
-    console.log('ℹ Initializing private storage with configuration:', nuxflyConfig.privateBucket)
     const endpointUrl = new URL(nuxflyConfig.privateBucket.s3Endpoint)
     minioClient = new Minio.Client({
       endPoint: endpointUrl.hostname,

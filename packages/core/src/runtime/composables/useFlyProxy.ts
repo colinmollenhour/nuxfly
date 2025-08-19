@@ -133,18 +133,6 @@ export function useFlyProxy(): FlyProxyInfo {
 }
 
 /**
- * Server-only composable for accessing Fly Proxy headers
- * Throws an error if used on client-side
- */
-export function useFlyProxyServer(): FlyProxyInfo {
-  if (typeof window !== 'undefined') {
-    throw new Error('useFlyProxyServer() can only be used on the server-side')
-  }
-  
-  return useFlyProxy()
-}
-
-/**
  * Use Fly Proxy headers from a Nuxt event handler
  * @param event - H3 event object from defineEventHandler
  */

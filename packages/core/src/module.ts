@@ -1,4 +1,4 @@
-import { defineNuxtModule, addImports, addPlugin, createResolver, addImportsDir } from '@nuxt/kit'
+import { defineNuxtModule, createResolver, addServerImportsDir } from '@nuxt/kit'
 import { defu } from 'defu'
 
 // Module options TypeScript interface definition
@@ -41,8 +41,9 @@ export default defineNuxtModule<ModuleOptions>({
         s3Region: 'auto',
       },
     },)
+    nuxt.options.runtimeConfig.public.s3PublicUrl = nuxt.options.runtimeConfig.public.s3PublicUrl || null
 
-    // Add composables for easy access to public and private storage
-    addImportsDir(resolve('./runtime/composables'))
+    // Add composables for easy access to public and private storage server-side
+    addServerImportsDir(resolve('./runtime/composables'))
   },
 })

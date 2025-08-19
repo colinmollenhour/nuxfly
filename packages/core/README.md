@@ -8,11 +8,11 @@ A Nuxt module that provides seamless integration with Fly.io infrastructure, inc
 ## Features
 
 - 🗄️ **SQLite Database** - libSQL integration with automatic connection management
-- 📦 **S3 Storage** - Public and private file storage with pre-signed URLs
-- 🔧 **Fly.io Integration** - Access to Fly.io platform utilities and proxying
-- 🎯 **TypeScript Support** - Full type safety with auto-completion
+- 📦 **S3 Storage** - Public and private file storage with Minio client for elegant API - pre-signed URLs support
+- 🔧 **Fly.io Integration** - Access to Fly.io proxy headers through `useFlyProxy()` composable
+- 🎯 **TypeScript Support** - Full type safety
 - ⚡ **Server-side Ready** - Optimized for Nuxt server-side rendering
-- 🔄 **Auto Configuration** - Automatic setup based on environment variables
+- 🔄 **Easy Configuration** - Automatic setup based on environment variables
 
 ## Installation
 
@@ -22,108 +22,60 @@ npm install @nuxfly/core
 
 ## Setup
 
-Add the module to your `nuxt.config.ts`:
+Update your `nuxt.config.ts` file:
+
+1. Add the module to your `modules` array.
+2. Set which services to enable in the `nuxfly` top-level configuration.
+3. Set your default values for the `runtimeConfig`. Since the runtime config can be overridden by environment variables,
+   you can set them in your deployment environment (e.g., Fly.io secrets) but use testing/local values hard-coded in the `nuxt.config.ts` for local development.
 
 ```typescript
 export default defineNuxtConfig({
   modules: ['@nuxfly/core'],
   nuxfly: {
-    // Optional configuration
-    database: {
-      url: process.env.DATABASE_URL
+    litestream: true,      // Enable SQLite with Litestream backup
+    publicStorage: true,   // Enable public S3 storage
+    privateStorage: true,  // Enable private S3 storage
+  },
+  runtimeConfig: {
+    nuxfly: {
+      publicBucket: {
+        s3AccessKeyId: 'AAAAAAAAAAAAAAAAAAAA',
+        s3SecretAccessKey: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+        s3Endpoint: 'http://localhost:8200',
+        s3Bucket: 'nuxfly-public',
+        s3Region: 'auto',
+      },
+      privateBucket: {
+        s3AccessKeyId: 'AAAAAAAAAAAAAAAAAAAA',
+        s3SecretAccessKey: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+        s3Endpoint: 'http://localhost:8200',
+        s3Bucket: 'nuxfly-private',
+        s3Region: 'auto',
+      },
     },
-    storage: {
-      publicBucket: process.env.PUBLIC_BUCKET_NAME,
-      privateBucket: process.env.PRIVATE_BUCKET_NAME,
-      region: process.env.AWS_REGION,
-      endpoint: process.env.S3_ENDPOINT
-    }
+    public: {
+      s3PublicUrl: 'http://localhost:8200/nuxfly-public',
+    },
   }
 })
 ```
 
-## Composables
-
-### `useSqliteDatabase()`
-
-Access your libSQL database with automatic connection management.
-
-```typescript
-const { db, execute, query } = useSqliteDatabase()
-
-// Execute queries
-await execute('INSERT INTO users (name, email) VALUES (?, ?)', ['John', 'john@example.com'])
-
-// Fetch data
-const users = await query('SELECT * FROM users WHERE active = ?', [true])
-```
-
-### `usePublicStorage()`
-
-Manage public file storage with S3-compatible API.
-
-```typescript
-const { uploadFile, getFileUrl, deleteFile, listFiles } = usePublicStorage()
-
-// Upload a file
-const result = await uploadFile(file, 'uploads/avatar.jpg')
-
-// Get public URL
-const url = await getFileUrl('uploads/avatar.jpg')
-
-// List files
-const files = await listFiles('uploads/')
-```
-
-### `usePrivateStorage()`
-
-Handle private file storage with pre-signed URLs for secure access.
-
-```typescript
-const { uploadFile, getSignedUrl, deleteFile, listFiles } = usePrivateStorage()
-
-// Upload private file
-await uploadFile(file, 'documents/private.pdf')
-
-// Get signed URL (expires in 1 hour by default)
-const signedUrl = await getSignedUrl('documents/private.pdf', { expiresIn: 3600 })
-```
-
-### `useFlyProxy()`
-
-Access Fly.io platform utilities and command proxying.
-
-```typescript
-const { proxyCommand, getAppInfo, getRegions } = useFlyProxy()
-
-// Proxy flyctl commands
-const result = await proxyCommand(['apps', 'list'])
-
-// Get app information
-const appInfo = await getAppInfo('my-app')
-```
-
 ## Environment Variables
 
-The module automatically configures itself using these environment variables:
+The module uses Nuxt runtime configuration, so the environment variables supported are just mapped from the `runtimeConfig`:
 
-```bash
-# Database
-DATABASE_URL=libsql://your-database-url
-DATABASE_AUTH_TOKEN=your-auth-token
-
-# Storage
-PUBLIC_BUCKET_NAME=your-public-bucket
-PRIVATE_BUCKET_NAME=your-private-bucket
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-S3_ENDPOINT=https://your-s3-endpoint
-
-# Fly.io
-FLY_API_TOKEN=your-fly-token
-FLY_APP_NAME=your-app-name
-```
+- `NUXT_NUXFLY_PUBLIC_BUCKET_S3_ACCESS_KEY_ID`
+- `NUXT_NUXFLY_PUBLIC_BUCKET_S3_SECRET_ACCESS_KEY`
+- `NUXT_NUXFLY_PUBLIC_BUCKET_S3_ENDPOINT`
+- `NUXT_NUXFLY_PUBLIC_BUCKET_S3_BUCKET`
+- `NUXT_NUXFLY_PUBLIC_BUCKET_S3_REGION`
+- `NUXT_NUXFLY_PRIVATE_BUCKET_S3_ACCESS_KEY_ID`
+- `NUXT_NUXFLY_PRIVATE_BUCKET_S3_SECRET_ACCESS_KEY`
+- `NUXT_NUXFLY_PRIVATE_BUCKET_S3_ENDPOINT`
+- `NUXT_NUXFLY_PRIVATE_BUCKET_S3_BUCKET`
+- `NUXT_NUXFLY_PRIVATE_BUCKET_S3_REGION`
+- `NUXT_PUBLIC_S3_PUBLIC_URL`
 
 ## TypeScript Support
 
@@ -132,61 +84,13 @@ The module provides full TypeScript support with auto-completion:
 ```typescript
 // Auto-completion for all composables
 const { db } = useSqliteDatabase()
-const { uploadFile } = usePublicStorage()
-
-// Type-safe query results
-interface User {
-  id: number
-  name: string
-  email: string
-}
-
-const users = await query<User>('SELECT * FROM users')
-```
-
-## Examples
-
-### Todo App with Database
-
-```vue
-<script setup>
-const { db, query, execute } = useSqliteDatabase()
-
-const todos = ref([])
-
-// Fetch todos
-const fetchTodos = async () => {
-  todos.value = await query('SELECT * FROM todos ORDER BY created_at DESC')
-}
-
-// Add todo
-const addTodo = async (text: string) => {
-  await execute('INSERT INTO todos (text, completed) VALUES (?, ?)', [text, false])
-  await fetchTodos()
-}
-
-onMounted(fetchTodos)
-</script>
-```
-
-### File Upload with Storage
-
-```vue
-<script setup>
-const { uploadFile, getFileUrl } = usePublicStorage()
-
-const handleFileUpload = async (file: File) => {
-  const key = `uploads/${Date.now()}-${file.name}`
-  await uploadFile(file, key)
-  const url = await getFileUrl(key)
-  console.log('File uploaded:', url)
-}
-</script>
+const { minioClient, bucket, getUrl } = usePublicStorage()
+const { minioClient, bucket } = usePrivateStorage()
 ```
 
 ## Documentation
 
-For detailed documentation and examples, visit: [nuxfly documentation](https://nuxfly.dev)
+For detailed documentation and examples, visit: [nuxfly documentation](https://nuxfly.pages.dev)
 
 ## License
 
