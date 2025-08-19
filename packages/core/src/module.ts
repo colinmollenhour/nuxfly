@@ -1,5 +1,6 @@
 import { defineNuxtModule, createResolver, addServerImportsDir } from '@nuxt/kit'
 import { defu } from 'defu'
+import type { FlyProxyHeaders, FlyProxyInfo } from './types'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
@@ -7,6 +8,8 @@ export interface ModuleOptions {
   publicStorage?: boolean
   privateStorage?: boolean
 }
+
+export type { FlyProxyHeaders, FlyProxyInfo }
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
