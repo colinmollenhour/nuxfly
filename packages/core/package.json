@@ -1,6 +1,6 @@
 {
   "name": "@nuxfly/core",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "keywords": [
     "nuxt",
     "module",
@@ -11,8 +11,20 @@
   "description": "Nuxt module for Fly.io integration with storage and database support",
   "homepage": "https://nuxfly.pages.dev/module",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    }
+  },
   "main": "./dist/module.mjs",
-  "types": "./dist/types.d.mts",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ]
+    }
+  },
   "files": [
     "dist"
   ],
@@ -30,5 +42,8 @@
     "@nuxt/kit": "^3.17.6",
     "defu": "^6.1.4",
     "minio": "^8.0.5"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "^1.0.1"
   }
 }

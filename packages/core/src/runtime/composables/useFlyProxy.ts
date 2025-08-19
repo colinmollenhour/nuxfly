@@ -1,3 +1,5 @@
+import { type FlyProxyHeaders, type FlyProxyInfo } from "../types"
+
 /**
  * Parse Fly Proxy headers from a headers object
  * @param headers - Headers object (e.g., from request.headers)

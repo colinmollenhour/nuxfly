@@ -1,6 +1,6 @@
 import { defineNuxtModule, createResolver, addServerImportsDir } from '@nuxt/kit'
 import { defu } from 'defu'
-import type { FlyProxyHeaders, FlyProxyInfo } from './types'
+import type { FlyProxyHeaders, FlyProxyInfo } from './runtime/types'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
