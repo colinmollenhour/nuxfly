@@ -78,6 +78,14 @@ export const generate = withErrorHandling(async (args, config) => {
     // Copy drizzle migrations from parent project
     await copyDrizzleMigrations(config);
     
+    // Generate .nuxfly/.gitignore to ignore migrations and node_modules
+    consola.info(`Step ${step++}: Generating .nuxfly/.gitignore...`);
+    const nuxflyGitignoreContent = `# Nuxfly generated files
+migrations/
+node_modules/
+`;
+    await writeFile(join(nuxflyDir, '.gitignore'), nuxflyGitignoreContent);
+    
     consola.success('✅ All deployment files generated successfully!');
     
     // Display generated files
@@ -103,6 +111,7 @@ function displayGeneratedFiles() {
     '🚀 .nuxfly/start.sh (startup script)',
     '📦 .nuxfly/package.json (drizzle-kit dependencies)',
     '🔒 .nuxfly/package-lock.json (dependency lock file)',
+    '🙈 .nuxfly/.gitignore (git ignore for generated files)',
   ];
   
   consola.box({
