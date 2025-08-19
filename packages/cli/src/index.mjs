@@ -2,6 +2,9 @@
 
 import { defineCommand, runMain } from 'citty';
 import consola from 'consola';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { loadConfig } from './utils/config.mjs';
 import { NuxflyError } from './utils/errors.mjs';
 
@@ -15,6 +18,44 @@ import { proxy, shouldProxy } from './commands/proxy.mjs';
 
 // Global configuration
 let globalConfig = null;
+
+// Package metadata cache
+let packageMeta = null;
+
+// Helper function to get package metadata with error handling and caching
+function getPackageMeta() {
+  if (packageMeta) {
+    return packageMeta;
+  }
+
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const packagePath = join(__dirname, '..', 'package.json');
+    const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+    
+    packageMeta = {
+      name: packageJson.name?.replace('@', '').replace('/', '-') || 'nuxfly',
+      version: packageJson.version || '1.0.0',
+      description: packageJson.description || 'A CLI tool for deploying Nuxt apps to Fly.io',
+      homepage: packageJson.homepage,
+      author: packageJson.author
+    };
+    
+    return packageMeta;
+  } catch (error) {
+    // Fallback values if package.json cannot be read
+    consola.debug('Could not read package.json, using fallback values:', error.message);
+    packageMeta = {
+      name: 'nuxfly',
+      version: '1.0.0',
+      description: 'A CLI tool for deploying Nuxt apps to Fly.io',
+      homepage: undefined,
+      author: undefined
+    };
+    return packageMeta;
+  }
+}
 
 // Helper function to load config with error handling
 async function ensureConfig() {
@@ -30,11 +71,7 @@ async function ensureConfig() {
 
 // Define main command
 const main = defineCommand({
-  meta: {
-    name: 'nuxfly',
-    version: '1.0.0',
-    description: 'A CLI tool for deploying Nuxt apps to Fly.io',
-  },
+  meta: getPackageMeta(),
   args: {
     verbose: {
       type: 'boolean',
