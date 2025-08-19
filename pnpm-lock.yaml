@@ -65,6 +65,10 @@ importers:
       minio:
         specifier: ^8.0.5
         version: 8.0.5
+    devDependencies:
+      '@nuxt/module-builder':
+        specifier: ^1.0.1
+        version: 1.0.1(@nuxt/cli@3.26.2(magicast@0.3.5))(@vue/compiler-core@3.5.17)(esbuild@0.25.6)(typescript@5.8.3)(vue@3.5.17(typescript@5.8.3))
 
   playground:
     dependencies:
@@ -10304,7 +10308,7 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
       estree-walker: 2.0.2
-      picomatch: 4.0.2
+      picomatch: 4.0.3
     optionalDependencies:
       rollup: 4.45.1
 
