@@ -1,5 +1,4 @@
 import { execa } from 'execa';
-import { basename } from 'path';
 import consola from 'consola';
 import { FlyctlNotFoundError, FlyctlError, withErrorHandling } from './errors.mjs';
 import { getFlyTomlPath, getAppName } from './config.mjs';
@@ -37,8 +36,8 @@ export function buildFlyctlArgs(command, userArgs = [], config = {}) {
   // Skip for storage commands and launch (since launch creates new configs)
   if (command !== 'storage' && command !== 'launch' && config._runtime?.flyTomlExists) {
     const flyTomlPath = getFlyTomlPath(config);
-    args.push('--config', basename(flyTomlPath));
-    consola.debug(`Using config: ${flyTomlPath} (relative: ${basename(flyTomlPath)})`);
+    args.push('--config', flyTomlPath);
+    consola.debug(`Using config: ${flyTomlPath}`);
   }
   
   // Add app flag if configured (but not for launch or storage commands)
