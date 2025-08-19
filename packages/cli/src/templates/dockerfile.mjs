@@ -21,8 +21,8 @@ COPY .nuxfly/migrations /app/dist/db/drizzle/migrations
 RUN cd /app/dist/db && npm install
 
 # Copy app files (assume already built)
-COPY .nuxfly/.output/server /app/dist
-COPY .nuxfly/.output/public /app/public
+COPY .output/server /app/dist
+COPY .output/public /app/public
 
 # Copy Litestream configuration and startup script
 COPY .nuxfly/litestream.yml /etc/litestream.yml
@@ -46,5 +46,6 @@ export function generateDockerignore() {
 *
 !.nuxfly/
 .nuxfly/node_modules
+!.output
 `;
 }

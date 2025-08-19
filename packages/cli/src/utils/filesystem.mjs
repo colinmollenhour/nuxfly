@@ -21,39 +21,6 @@ export const ensureNuxflyDir = withErrorHandling(async (config) => {
 });
 
 /**
- * Copy .output directory to .nuxfly/.output if it exists
- */
-export const copyDistDir = withErrorHandling(async (config) => {
-  const distPath = config._runtime?.distPath;
-  const nuxflyDir = getNuxflyDir(config);
-  const targetDistPath = join(nuxflyDir, '.output');
-  
-  if (!existsSync(distPath)) {
-    consola.debug('No .output directory found, skipping copy');
-    return false;
-  }
-  
-  consola.debug(`Copying .output directory from ${distPath} to ${targetDistPath}`);
-  
-  try {
-    // Remove existing dist directory if it exists
-    if (existsSync(targetDistPath)) {
-      await removeDirectory(targetDistPath);
-    }
-    
-    // Copy directory recursively
-    await cp(distPath, targetDistPath, { recursive: true, verbatimSymlinks: true });
-    consola.success('Copied .output directory to .nuxfly/.output');
-    return true;
-  } catch (error) {
-    if (error.code === 'EACCES') {
-      throw new PermissionError(distPath);
-    }
-    throw new NuxflyError(`Failed to copy .output directory: ${error.message}`);
-  }
-});
-
-/**
  * Write content to a file, creating directories as needed
  */
 export const writeFile = withErrorHandling(async (filepath, content) => {

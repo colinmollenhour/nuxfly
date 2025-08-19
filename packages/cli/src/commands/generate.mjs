@@ -1,6 +1,6 @@
 import { join } from 'path';
 import consola from 'consola';
-import { ensureNuxflyDir, writeFile, copyDistDir, copyDrizzleMigrations } from '../utils/filesystem.mjs';
+import { ensureNuxflyDir, writeFile, copyDrizzleMigrations } from '../utils/filesystem.mjs';
 import { withErrorHandling } from '../utils/errors.mjs';
 import { hasDistDir, getEnvironmentSpecificFlyTomlPath } from '../utils/config.mjs';
 import { buildApplication, installNuxflyDependencies } from '../utils/build.mjs';
@@ -78,19 +78,11 @@ export const generate = withErrorHandling(async (args, config) => {
     // Copy drizzle migrations from parent project
     await copyDrizzleMigrations(config);
     
-    // Copy dist directory if it exists
-    if (hasDistDir(config)) {
-      consola.info(`Step ${step++}: Copying .output directory...`);
-      await copyDistDir(config);
-    } else {
-      consola.debug('No dist directory found, skipping copy');
-    }
-    
     consola.success('✅ All deployment files generated successfully!');
     
     // Display generated files
-    displayGeneratedFiles(hasDistDir(config), args.build);
-    
+    displayGeneratedFiles();
+
   } catch (error) {
     throw new Error(`Failed to generate deployment files: ${error.message}`);
   }
@@ -100,7 +92,7 @@ export const generate = withErrorHandling(async (args, config) => {
 /**
  * Display list of generated files
  */
-function displayGeneratedFiles(hasDistCopy, build) {
+function displayGeneratedFiles() {
   const flyTomlPath = getEnvironmentSpecificFlyTomlPath() || 'fly.toml';
   const files = [
     `📄 ${flyTomlPath} (Fly.io configuration)`,
@@ -112,10 +104,6 @@ function displayGeneratedFiles(hasDistCopy, build) {
     '📦 .nuxfly/package.json (drizzle-kit dependencies)',
     '🔒 .nuxfly/package-lock.json (dependency lock file)',
   ];
-  
-  if (hasDistCopy) {
-    files.push('📁 .output/ (application '+(build ? 'built' : 'not built')+')');
-  }
   
   consola.box({
     title: '📁 Generated files',

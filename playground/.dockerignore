@@ -2,3 +2,4 @@
 *
 !.nuxfly/
 .nuxfly/node_modules
+!.output
