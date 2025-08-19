@@ -5,7 +5,7 @@ let minioClient: Minio.Client
 let bucket: string
 let baseUrl: string
 
-export default function usePublicStorage() {
+export const usePublicStorage = () => {
   if (!minioClient) {
     const config = useRuntimeConfig()
     const nuxflyConfig = config.nuxfly || {}

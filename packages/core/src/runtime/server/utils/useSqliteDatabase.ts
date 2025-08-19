@@ -3,7 +3,7 @@ import { useRuntimeConfig } from '#imports'
 
 let db: ReturnType<typeof createClient> | undefined
 
-export default function useSqliteDatabase() {
+export const useSqliteDatabase = () => {
   if (!db) {
     const nuxflyConfig = useRuntimeConfig().nuxfly || {}
     if (!nuxflyConfig.dbUrl) {

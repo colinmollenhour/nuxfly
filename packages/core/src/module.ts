@@ -1,15 +1,8 @@
 import { defineNuxtModule, createResolver, addServerImportsDir } from '@nuxt/kit'
 import { defu } from 'defu'
-import type { FlyProxyHeaders, FlyProxyInfo } from './runtime/types'
+import { type ModuleOptions } from './runtime/types'
 
-// Module options TypeScript interface definition
-export interface ModuleOptions {
-  litestream?: boolean
-  publicStorage?: boolean
-  privateStorage?: boolean
-}
-
-export type { FlyProxyHeaders, FlyProxyInfo }
+export * from './runtime/types';
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -47,6 +40,6 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.runtimeConfig.public.s3PublicUrl = nuxt.options.runtimeConfig.public.s3PublicUrl || null
 
     // Add composables for easy access to public and private storage server-side
-    addServerImportsDir(resolve('./runtime/composables'))
+    addServerImportsDir(resolve('./runtime/server/utils'))
   },
 })

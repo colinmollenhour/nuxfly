@@ -1,10 +1,10 @@
-import { type FlyProxyHeaders, type FlyProxyInfo } from "../types"
+import { type FlyProxyHeaders, type FlyProxyInfo } from "../../types"
 
 /**
  * Parse Fly Proxy headers from a headers object
  * @param headers - Headers object (e.g., from request.headers)
  */
-export function parseFlyProxyHeaders(headers: Record<string, string | string[] | undefined>): FlyProxyInfo {
+function parseFlyProxyHeaders(headers: Record<string, string | string[] | undefined>): FlyProxyInfo {
   // Normalize headers to lowercase and handle arrays
   const normalizedHeaders: Record<string, string> = {}
   for (const [key, value] of Object.entries(headers)) {
@@ -76,7 +76,7 @@ export function parseFlyProxyHeaders(headers: Record<string, string | string[] |
  * Note: This composable works best when used in server-side contexts where headers are available.
  * On the client-side, it will return empty values.
  */
-export function useFlyProxy(): FlyProxyInfo {
+export const useFlyProxy = (): FlyProxyInfo => {
   // Default empty headers for client-side or when headers are not available
   let headers: Record<string, string> = {}
   
@@ -98,9 +98,7 @@ export function useFlyProxy(): FlyProxyInfo {
  * Use Fly Proxy headers from a Nuxt event handler
  * @param event - H3 event object from defineEventHandler
  */
-export function useFlyProxyFromEvent(event: any): FlyProxyInfo {
+export const useFlyProxyFromEvent = (event: any): FlyProxyInfo => {
   const headers = event?.node?.req?.headers || {}
   return parseFlyProxyHeaders(headers)
 }
-
-export default useFlyProxy
