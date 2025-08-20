@@ -13,8 +13,8 @@ export const proxy = withErrorHandling(async (args, config, originalCommand) => 
   }
   
   // Get the original command and arguments
-  const command = originalCommand || args._[0];
-  const commandArgs = args._ ? args._.slice(1) : [];
+  const command = originalCommand;
+  const commandArgs = args._ || [];
   
   if (!command) {
     throw new NuxflyError('No command specified for proxy');

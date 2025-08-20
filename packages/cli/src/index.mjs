@@ -241,8 +241,9 @@ async function handleUnknownCommand() {
       config = { _runtime: {} };
     }
     
-    // Parse the arguments manually for proxy
-    const parsedArgs = { _: args.slice(1) };
+    // Pass all arguments after the command to the proxy function
+    const commandArgs = args.slice(1);
+    const parsedArgs = { _: commandArgs };
     
     // Simple argument parsing for flags
     for (let i = 1; i < args.length; i++) {
