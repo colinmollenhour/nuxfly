@@ -90,7 +90,7 @@ export async function createLitestreamBucket(orgName, config) {
   
   try {
     // Create bucket from /tmp directory to avoid taking app's default slot
-    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName], config, '/tmp');
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName, '--yes'], config, '/tmp');
     
     // Parse the output to extract credentials
     const credentials = parseStorageCreateOutput(result.stdout);
@@ -124,7 +124,7 @@ export async function createPublicBucket(orgName, config) {
   
   try {
     // Create public bucket from /tmp directory
-    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName, '--public'], config, '/tmp');
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName, '--public', '--yes'], config, '/tmp');
     
     // Parse the output to extract credentials
     const credentials = parseStorageCreateOutput(result.stdout);
@@ -158,7 +158,7 @@ export async function createPrivateBucket(orgName, config) {
   
   try {
     // Create private bucket from /tmp directory
-    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName], config, '/tmp');
+    const result = await executeFlyctlWithOutputInDir('storage', ['create', '--name', bucketName, '--org', orgName, '--yes'], config, '/tmp');
     
     // Parse the output to extract credentials
     const credentials = parseStorageCreateOutput(result.stdout);

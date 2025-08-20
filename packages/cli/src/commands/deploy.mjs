@@ -94,7 +94,7 @@ async function ensureBucketsExist(config) {
   } catch (error) {
     // Don't fail deployment if bucket check fails
     consola.warn(`Failed to check/create buckets: ${error.message}`);
-    consola.debug('Continuing with deployment...');
+    throw error;
   }
 }
 
