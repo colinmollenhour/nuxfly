@@ -89,6 +89,10 @@ function applyEnvironmentOverrides(config) {
   if (process.env.FLY_ACCESS_TOKEN) {
     consola.debug('FLY_ACCESS_TOKEN found in environment');
   }
+  // FLY_API_TOKEN is used as well by flyctl directly
+  if (process.env.FLY_API_TOKEN) {
+    consola.debug('FLY_API_TOKEN found in environment');
+  }
 }
 
 /**

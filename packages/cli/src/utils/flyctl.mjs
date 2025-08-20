@@ -77,6 +77,8 @@ export const executeFlyctl = withErrorHandling(async (command, userArgs = [], co
   // Ensure environment variables are passed through
   if (process.env.FLY_ACCESS_TOKEN) {
     execOptions.env.FLY_ACCESS_TOKEN = process.env.FLY_ACCESS_TOKEN;
+  } else if (process.env.FLY_API_TOKEN) {
+    execOptions.env.FLY_API_TOKEN = process.env.FLY_API_TOKEN;
   }
   
   consola.debug(`Executing: flyctl ${args.join(' ')}`);
@@ -163,8 +165,10 @@ export const streamFlyctl = withErrorHandling(async (command, userArgs = [], con
   // Ensure environment variables are passed through
   if (process.env.FLY_ACCESS_TOKEN) {
     execOptions.env.FLY_ACCESS_TOKEN = process.env.FLY_ACCESS_TOKEN;
+  } else if (process.env.FLY_API_TOKEN) {
+    execOptions.env.FLY_API_TOKEN = process.env.FLY_API_TOKEN;
   }
-  
+
   consola.debug(`Streaming: flyctl ${args.join(' ')}`);
   
   try {

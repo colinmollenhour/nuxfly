@@ -95,7 +95,7 @@ async function setupTunnel(appName, localPort, remotePort) {
       stdio: ['pipe', 'pipe', 'inherit'],
       env: {
         ...process.env,
-        FLY_ACCESS_TOKEN: process.env.FLY_ACCESS_TOKEN,
+        FLY_ACCESS_TOKEN: process.env.FLY_ACCESS_TOKEN || process.env.FLY_API_TOKEN || undefined,
       },
     });
     

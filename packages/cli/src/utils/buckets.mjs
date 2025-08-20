@@ -184,12 +184,6 @@ export async function createPrivateBucket(orgName, config) {
 }
 
 /**
- * Create S3 buckets based on configuration
- */
-export async function createS3Buckets(config) {
-}
-
-/**
  * Get list of existing storage buckets for the app
  */
 export async function getExistingBuckets(config) {
